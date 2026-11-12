@@ -1,6 +1,6 @@
 {
   "files": {
-    ".claude-plugin/plugin.json": "3670b2e81cebb6099a7a76d02c8fc214acc43a588c9ea62932c21271c44a2da6",
+    ".claude-plugin/plugin.json": "384d95df359851edd33bc1ef4f74f571cff36874bea20309c037f91757ef3f51",
     ".mcp.json": "7204128eb493a409434b4d57ef085f9018efd14145471062f636a0a850d8185d",
     "LICENSE": "acc551d426d8af5e1af556443629463bd4de026f7ed73a0c51ef1d94c3d27dc9",
     "README.md": "03f35061c15f145c04e539950cf131383dc26fa0f280c181badeff84fe5341b7",
@@ -16,7 +16,7 @@
       "schemas/mcp.schema.json": "6539175bfcdf43085855183e86da40ea94b166547a72b47ae9a0a390516d3acb",
       "schemas/plugin.schema.json": "0a4aad95ce337878ad38802ebf0daa3fde76abe3f65400c86bcbb1ec0b3ab883",
       "schemas/provenance.json": "e33203fae61c784a3564646f68234366419c849661964c2cba70606298a65379",
-      "tools/pack.py": "066b41d5abd975aead15a5382064ad7d0bc94629001f1929230207ab04f26917"
+      "tools/pack.py": "a721282e52ca6a15d18a710a82307130b56a17c8d5f71dab2e3a19b45cac615b"
     },
     "format": 1,
     "inputs": {
@@ -28,6 +28,6 @@
       "skills/piranya-sales-reporting/references/request-gates.md": "a0b0a59f6bd6fe26d1336ad90824a0bb069adc20ff5f78c0db0efc064dea5717",
       "skills/piranya-sales-reporting/references/scenarios.md": "b3e2d16e523b5c5edfe05578a9b2810799e38251b230a0124f20a16216d6fae9"
     },
-    "inventory_sha256": "dcc673937b32f98d717492763f8b7b956122acef1f27f2825f3f52139d7d869f"
+    "inventory_sha256": "b03ce54ab36429f605837986694ec3c123e504f6eb0b8c3a41dd0e600a892221"
   }
 }

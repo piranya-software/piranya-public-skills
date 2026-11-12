@@ -231,6 +231,7 @@ def inventory_check(inv):
                              'connectors': {'type': 'object', 'additionalProperties': {'type': 'string'}},
                              'assets': {'type': 'array', 'uniqueItems': True, 'maxItems': 16, 'items': {'type': 'string'}},
                              'openai_interface': {'type': 'object'},
+                             'claude_icon': {'type': 'string', 'pattern': r'^\./assets/[A-Za-z0-9_-]+\.png$'},
                              'license': {'const': 'MIT'},
                              'license_file': {'const': 'LICENSE'},
                              'readme_file': {'type': 'string', 'pattern': r'^products/[a-z0-9]+(?:-[a-z0-9]+)*\.md$'},
@@ -254,6 +255,11 @@ def inventory_check(inv):
     for key, value in inv['connectors'].items():
         safe_name(key)
         endpoint(value)
+    if 'claude_icon' in inv:
+        reference = inv['claude_icon']
+        safe_name(reference[2:])
+        if not binary_asset(reference[2:]) or reference[2:] not in inv.get('assets', []):
+            raise ValueError('Claude icon must be explicitly selected')
 
 
 def inputs(root, inv):
@@ -368,9 +374,12 @@ def build(root, inv, lock, provider, release_commit=None):
         manifest_path, mcp_path, transport = 'plugin.json', 'mcp.json', 'streamable-http'
     else:
         # Deliberately narrow documented Claude subset, not an official Claude schema.
+        if 'claude_icon' in inv:
+            manifest['icon'] = inv['claude_icon']
         manifest_path, mcp_path, transport = '.claude-plugin/plugin.json', '.mcp.json', 'http'
         properties: dict = {k: {'type': 'string'} for k in ('name', 'version', 'description')}
         properties['license'] = {'const': 'MIT'}
+        properties['icon'] = {'type': 'string', 'pattern': r'^\./assets/[A-Za-z0-9_-]+\.png$'}
         properties['author'] = {'type': 'object', 'required': ['name'], 'additionalProperties': False,
                                 'properties': {'name': {'type': 'string', 'minLength': 1}}}
         Draft202012Validator({'type': 'object', 'required': ['name', 'version', 'description'], 'additionalProperties': False, 'properties': properties}).validate(manifest)

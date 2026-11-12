@@ -6,6 +6,7 @@
   "license": "MIT",
   "license_file": "LICENSE",
   "readme_file": "products/site-management.md",
+  "claude_icon": "./assets/piranya-icon.png",
   "openai_interface": {
     "displayName": "Piranya site management",
     "shortDescription": "Website and catalog editing",

@@ -3,6 +3,7 @@
     "name": "Piranya"
   },
   "description": "Piranya site management workflows",
+  "icon": "./assets/piranya-icon.png",
   "license": "MIT",
   "name": "piranya-site-management",
   "version": "0.1.0"

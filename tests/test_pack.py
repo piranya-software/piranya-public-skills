@@ -70,6 +70,31 @@ class PackagingTests(unittest.TestCase):
         files = p.inspect(p.build(self.root, self.inventory, self.snapshot(), 'claude'))
         self.assertNotIn('assets/icon.png', files)
 
+    def test_claude_icon_selected_exact_bytes(self):
+        self.select_icon()
+        self.inventory['claude_icon'] = './assets/icon.png'
+        lock = self.snapshot()
+        for provider, path in [('claude', '.claude-plugin/plugin.json'), ('openai', 'plugin.json')]:
+            files = p.inspect(p.build(self.root, self.inventory, lock, provider))
+            manifest = json.loads(files[path])
+            if provider == 'claude':
+                self.assertEqual(manifest['icon'], './assets/icon.png')
+            else:
+                self.assertNotIn('icon', manifest)
+            self.assertEqual(files['assets/icon.png'], (self.root / 'assets/icon.png').read_bytes())
+        (self.root / 'assets/icon.png').unlink()
+        with self.assertRaises(FileNotFoundError):
+            self.snapshot()
+
+    def test_claude_icon_references_fail_closed(self):
+        self.select_icon()
+        for reference in ('./assets/missing.png', './assets/icon.svg', '../assets/icon.png',
+                          'assets/icon.png', './assets/nested/icon.png', './assets/icon.png\n'):
+            with self.subTest(reference=reference), self.assertRaises(Exception):
+                p.snapshot(self.root, {**self.inventory, 'claude_icon': reference})
+        with self.assertRaises(Exception):
+            p.snapshot(self.root, {**self.inventory, 'claude_interface': {'icon': './assets/icon.png'}})
+
     def test_icon_reparse_and_symlink_rejected(self):
         from types import SimpleNamespace
         from unittest.mock import patch

@@ -37,7 +37,13 @@ class DistributionTests(unittest.TestCase):
             inventory = d.pack.load(self.root / ('packages/' + name + '.json'))
             metadata = json.loads(b['plugin.json'])['extensions']['com.openai']['interface']
             self.assertEqual(metadata, inventory['openai_interface'])
-            self.assertNotIn('extensions', json.loads(a['.claude-plugin/plugin.json']))
+            claude_manifest = json.loads(a['.claude-plugin/plugin.json'])
+            self.assertNotIn('extensions', claude_manifest)
+            self.assertEqual(claude_manifest['icon'], './assets/piranya-icon.png')
+            icon_path = claude_manifest['icon'][2:]
+            self.assertEqual(a[icon_path], (self.root / ('plugins/' + name + '/' + icon_path)).read_bytes())
+            self.assertEqual(json.loads((self.root / ('plugins/' + name + '/.claude-plugin/plugin.json')).read_bytes())['icon'], claude_manifest['icon'])
+            self.assertEqual(json.loads(a['package-inputs.json'])['files'][icon_path], d.pack.digest(a[icon_path]))
             self.assertEqual(metadata['termsOfServiceURL'], 'https://github.com/piranya-software/piranya-public-skills/blob/main/legal/terms-of-service.md')
             self.assertEqual(metadata['privacyPolicyURL'], 'https://github.com/piranya-software/piranya-public-skills/blob/main/legal/privacy.md')
             self.assertEqual(metadata['logo'], './assets/piranya-icon.png')

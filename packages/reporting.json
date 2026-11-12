@@ -6,6 +6,7 @@
   "license": "MIT",
   "license_file": "LICENSE",
   "readme_file": "products/reporting.md",
+  "claude_icon": "./assets/piranya-icon.png",
   "openai_interface": {
     "displayName": "Piranya reporting",
     "shortDescription": "Read-only sales analysis",

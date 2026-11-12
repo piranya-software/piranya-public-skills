@@ -8,6 +8,7 @@
 
 ## Acceptance evidence still required
 
+- Verify directory icon discovery from the declared Claude manifest `icon` against the selected package artwork in the actual submission surface; strict CLI validation alone does not prove listing rendering.
 - Run bundled synthetic scenarios in actual hosts. Record package content identity, surface, activation, tool discovery, consent controls and omissions; static schema checks are not behavioral results.
 - Verify inline editor markup and native interactions against an approved compatible target; source-document comparison does not establish installed or rendered behavior.
 - Review the available bounded listing metadata against current provider requirements; it is not submission completion. Confirm publisher/domain ownership, current provider acceptance of the approved service terms and privacy URLs.
