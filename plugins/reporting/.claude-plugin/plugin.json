@@ -3,6 +3,7 @@
     "name": "Piranya"
   },
   "description": "Piranya reporting workflows",
+  "license": "MIT",
   "name": "piranya-reporting",
   "version": "0.1.0"
 }

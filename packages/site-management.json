@@ -1,6 +1,8 @@
 {
   "name": "piranya-site-management",
   "author": {"name": "Piranya"},
+  "license": "MIT",
+  "license_file": "LICENSE",
   "version": "0.1.0",
   "description": "Piranya site management workflows",
   "skills": {

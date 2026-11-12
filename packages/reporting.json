@@ -1,6 +1,8 @@
 {
   "name": "piranya-reporting",
   "author": {"name": "Piranya"},
+  "license": "MIT",
+  "license_file": "LICENSE",
   "version": "0.1.0",
   "description": "Piranya reporting workflows",
   "skills": {

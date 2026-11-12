@@ -19,6 +19,7 @@ class DistributionTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
+        shutil.copyfile(ROOT / 'LICENSE', self.root / 'LICENSE')
         for folder in ('skills', 'packages'):
             shutil.copytree(ROOT / folder, self.root / folder)
 
@@ -34,6 +35,10 @@ class DistributionTests(unittest.TestCase):
             source = json.loads(a['package-inputs.json'])['source']
             self.assertEqual(source, json.loads(b['package-inputs.json'])['source'])
             self.assertIn('tools/pack.py', source['builder_inputs'])
+            for files, manifest in ((a, '.claude-plugin/plugin.json'), (b, 'plugin.json')):
+                self.assertEqual(files['LICENSE'], (ROOT / 'LICENSE').read_bytes())
+                self.assertEqual(json.loads(files[manifest])['license'], 'MIT')
+                self.assertEqual(source['inputs']['LICENSE'], d.pack.digest(files['LICENSE']))
             self.assertFalse(any('lock.json' in k for k in a))
 
     def test_check_missing_is_read_only(self):

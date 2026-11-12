@@ -1,6 +1,6 @@
 # Release requirements
 
-- Owner license selection, public suitability review, and explicit authorization for visibility, publication, commits/pushes and listing submission.
+- Public suitability review, and explicit authorization for visibility, publication, commits/pushes and listing submission.
 - Authenticated OpenAI and Claude host installation, OAuth, discovery and consent-boundary acceptance; Claude strict host validation. Offline schema checks do not satisfy these gates.
 - Pin reviewed source and builder commits for release; local content locks support uncommitted initial snapshots only as non-release artifacts.
 - Extend explicit per-skill file lists when supporting references are authored; no recursive directory inclusion.

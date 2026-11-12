@@ -38,6 +38,63 @@ class PackagingTests(unittest.TestCase):
             manifest = json.loads(p.inspect(p.build(self.root, self.inventory, self.snapshot(), provider))[path])
             self.assertEqual(manifest['author'], self.inventory['author'])
 
+    def test_explicit_license_both_providers_and_stale_lock(self):
+        self.inventory.update(license='MIT', license_file='LICENSE')
+        license_path = self.root / 'LICENSE'
+        license_path.write_bytes(b'Synthetic license fixture\n')
+        lock = self.snapshot()
+        for provider, manifest_path in [('openai', 'plugin.json'), ('claude', '.claude-plugin/plugin.json')]:
+            files = p.inspect(p.build(self.root, self.inventory, lock, provider))
+            self.assertEqual(files['LICENSE'], license_path.read_bytes())
+            self.assertEqual(json.loads(files[manifest_path])['license'], 'MIT')
+            provenance = json.loads(files['package-inputs.json'])
+            self.assertEqual(provenance['source']['inputs']['LICENSE'], p.digest(files['LICENSE']))
+            self.assertEqual(provenance['files']['LICENSE'], p.digest(files['LICENSE']))
+        license_path.write_bytes(b'Changed license\n')
+        for provider in ('openai', 'claude'):
+            with self.assertRaises(ValueError):
+                p.build(self.root, self.inventory, lock, provider)
+
+    def test_license_is_not_implicitly_included(self):
+        (self.root / 'LICENSE').write_bytes(b'Unselected fixture')
+        for provider in ('openai', 'claude'):
+            files = p.inspect(p.build(self.root, self.inventory, self.snapshot(), provider))
+            self.assertNotIn('LICENSE', files)
+
+    def test_license_selection_restricted(self):
+        for fields in ({'license': 'MIT'}, {'license_file': 'LICENSE'},
+                       {'license': 'Apache-2.0', 'license_file': 'LICENSE'},
+                       {'license': 'MIT', 'license_file': '../LICENSE'},
+                       {'license': 'MIT', 'license_file': 'README.md'},
+                       {'license': None, 'license_file': 'LICENSE'}):
+            with self.subTest(fields=fields), self.assertRaises(Exception):
+                p.snapshot(self.root, {**self.inventory, **fields})
+
+    def test_missing_selected_license_fails(self):
+        self.inventory.update(license='MIT', license_file='LICENSE')
+        with self.assertRaises(FileNotFoundError):
+            self.snapshot()
+
+    def test_selected_license_uses_input_safety_checks(self):
+        from types import SimpleNamespace
+        from unittest.mock import patch
+        self.inventory.update(license='MIT', license_file='LICENSE')
+        target = self.root / 'LICENSE'
+        target.write_bytes(b'Synthetic fixture')
+        original = Path.lstat
+        def marked(path, *args, **kwargs):
+            info = original(path, *args, **kwargs)
+            if path == target:
+                return SimpleNamespace(st_mode=info.st_mode, st_file_attributes=0x400)
+            return info
+        with patch.object(Path, 'lstat', marked), self.assertRaises(ValueError):
+            self.snapshot()
+        with patch.object(p, 'MAX_FILE', 4), self.assertRaises(ValueError):
+            self.snapshot()
+        target.write_bytes(b'\xff')
+        with self.assertRaises(UnicodeDecodeError):
+            self.snapshot()
+
     def test_unknown_source(self):
         lock = self.snapshot()
         (self.root / 'skills/demo/SKILL.md').write_text('changed')

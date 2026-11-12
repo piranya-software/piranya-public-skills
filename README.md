@@ -1,6 +1,6 @@
 # Piranya skills
 
-Provider-neutral skills for meaningful user jobs. The repository is **private initially**; its selected inputs must still be suitable for eventual public distribution. No license has been selected. Nothing here authorizes publication, visibility changes, commits, pushes, listing submission, deployment, reviewer provisioning, or credential handling.
+Provider-neutral skills for meaningful user jobs. The repository is **private initially**; its selected inputs must still be suitable for eventual public distribution. The public skills, documentation and tooling are licensed under [MIT](LICENSE). This does not license the remote MCP service, grant service access, or waive authentication, authorization or service terms. Nothing here authorizes publication, visibility changes, commits, pushes, listing submission, deployment, reviewer provisioning, or credential handling.
 
 ## Layout
 

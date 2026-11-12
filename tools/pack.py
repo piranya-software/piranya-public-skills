@@ -122,9 +122,13 @@ def inventory_check(inv):
               'properties': {'name': {'type': 'string', 'pattern': '^[a-z0-9]+(?:-[a-z0-9]+)*$'}, 'version': {'type': 'string', 'minLength': 1}, 'description': {'type': 'string', 'minLength': 1},
                              'skills': {'type': 'object', 'minProperties': 1, 'additionalProperties': {'type': 'array', 'minItems': 1, 'uniqueItems': True, 'items': {'type': 'string'}}},
                              'connectors': {'type': 'object', 'additionalProperties': {'type': 'string'}},
+                             'license': {'const': 'MIT'},
+                             'license_file': {'const': 'LICENSE'},
                              'author': {'type': 'object', 'required': ['name'], 'additionalProperties': False,
                                         'properties': {'name': {'type': 'string', 'minLength': 1}}}}}
     Draft202012Validator(schema).validate(inv)
+    if ('license' in inv) != ('license_file' in inv):
+        raise ValueError('License metadata and explicit license_file must be selected together')
     for key, value in inv['connectors'].items():
         safe_name(key)
         endpoint(value)
@@ -133,6 +137,8 @@ def inventory_check(inv):
 def inputs(root, inv):
     inventory_check(inv)
     result = {}
+    if 'license_file' in inv:
+        result[inv['license_file']] = read_input(root, inv['license_file'])
     for skill, files in inv['skills'].items():
         safe_name(skill)
         if '/' in skill or 'SKILL.md' not in files:
@@ -219,6 +225,8 @@ def build(root, inv, lock, provider, release_commit=None):
     manifest = {k: inv[k] for k in ('name', 'version', 'description')}
     if 'author' in inv:
         manifest['author'] = inv['author']
+    if 'license' in inv:
+        manifest['license'] = inv['license']
     if provider == 'openai':
         manifest['$schema'] = PLUGIN_ID
         validate(manifest, 'plugin.schema.json')
@@ -227,6 +235,7 @@ def build(root, inv, lock, provider, release_commit=None):
         # Deliberately narrow documented Claude subset, not an official Claude schema.
         manifest_path, mcp_path, transport = '.claude-plugin/plugin.json', '.mcp.json', 'http'
         properties: dict = {k: {'type': 'string'} for k in ('name', 'version', 'description')}
+        properties['license'] = {'const': 'MIT'}
         properties['author'] = {'type': 'object', 'required': ['name'], 'additionalProperties': False,
                                 'properties': {'name': {'type': 'string', 'minLength': 1}}}
         Draft202012Validator({'type': 'object', 'required': ['name', 'version', 'description'], 'additionalProperties': False, 'properties': properties}).validate(manifest)
