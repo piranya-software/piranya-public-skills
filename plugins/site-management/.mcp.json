@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "piranya-site-management": {
+      "type": "http",
+      "url": "https://mcpserver.prod.core.piranya.io/mcp/site-management"
+    }
+  }
+}

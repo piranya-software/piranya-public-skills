@@ -15,7 +15,7 @@ The initial site-management inventory selects `piranya-site-editing` and `pirany
 
 ## Local commands
 
-Follow [skill maintenance](docs/maintenance.md) before authoring improvements or refreshing consumer copies. Canonical source and pinned consumption have separate update steps; generated copies are never authoring targets.
+Follow [skill maintenance](docs/maintenance.md) before authoring improvements or refreshing consumer copies. Canonical source and pinned consumption have separate update steps; generated copies are never authoring targets. See [same-repository distribution and release gates](docs/releasing.md) for generated Claude plugin paths, both provider ZIPs and release-tag consumption.
 
 Python 3.11+ and the dependencies declared in `tools/requirements.txt` are required. Inventories and locks use JSON; the builder does not claim YAML/frontmatter validation. Installation is an explicit operator action, not a builder side effect:
 
@@ -48,4 +48,4 @@ The caller must provide these actual paths. Pin the reviewed public builder chec
 
 OpenAI/portable output uses root `plugin.json` and optional `mcp.json`, official Agent Plugins 1.0.0 schemas, and `streamable-http`. Claude output uses `.claude-plugin/plugin.json`, optional root `.mcp.json`, and `http`. Skills remain at root `skills/` for both. No invented provider authorization or tool-filter fields are emitted. See [schema provenance](docs/schemas.md) and [endpoint evidence](docs/endpoints.md).
 
-Local validation is not a host-runtime certification or a semantic privacy clearance. Before any publication, the owner must select a license, approve every input and endpoint for public use, authorize visibility/publication and submission, pin source and tooling commits, and complete authenticated host installation/OAuth/tool discovery plus read/write/delete-consent testing. Claude's authoritative `claude plugin validate <unpacked-directory> --strict` and actual OpenAI host acceptance remain required. No host acceptance, reviewer access, or listing approval is claimed by the offline builder.
+Local validation is not host certification or semantic privacy clearance. Repository publication and visibility require owner authority and complete content/history disclosure clearance, including Git author metadata. Marketplace release separately requires approved licensing/distribution terms, source/tooling pins, submission authority and authenticated host installation/OAuth/discovery plus read/write/delete-consent testing. Claude strict plugin validation and actual OpenAI host acceptance remain separate checks. No host acceptance, reviewer access or listing approval is claimed by the offline builder.

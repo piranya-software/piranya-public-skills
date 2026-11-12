@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "piranya-reporting": {
+      "type": "http",
+      "url": "https://mcpserver.prod.core.piranya.io/mcp/reporting"
+    }
+  }
+}
