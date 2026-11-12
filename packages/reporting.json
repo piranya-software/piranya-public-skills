@@ -3,6 +3,7 @@
   "author": {"name": "Piranya"},
   "license": "MIT",
   "license_file": "LICENSE",
+  "readme_file": "products/reporting.md",
   "version": "0.1.0",
   "description": "Piranya reporting workflows",
   "skills": {

@@ -124,11 +124,14 @@ def inventory_check(inv):
                              'connectors': {'type': 'object', 'additionalProperties': {'type': 'string'}},
                              'license': {'const': 'MIT'},
                              'license_file': {'const': 'LICENSE'},
+                             'readme_file': {'type': 'string', 'pattern': r'^products/[a-z0-9]+(?:-[a-z0-9]+)*\.md$'},
                              'author': {'type': 'object', 'required': ['name'], 'additionalProperties': False,
                                         'properties': {'name': {'type': 'string', 'minLength': 1}}}}}
     Draft202012Validator(schema).validate(inv)
     if ('license' in inv) != ('license_file' in inv):
         raise ValueError('License metadata and explicit license_file must be selected together')
+    if 'readme_file' in inv:
+        safe_name(inv['readme_file'])
     for key, value in inv['connectors'].items():
         safe_name(key)
         endpoint(value)
@@ -139,6 +142,8 @@ def inputs(root, inv):
     result = {}
     if 'license_file' in inv:
         result[inv['license_file']] = read_input(root, inv['license_file'])
+    if 'readme_file' in inv:
+        result[inv['readme_file']] = read_input(root, inv['readme_file'])
     for skill, files in inv['skills'].items():
         safe_name(skill)
         if '/' in skill or 'SKILL.md' not in files:
@@ -158,7 +163,9 @@ def inputs(root, inv):
                 raise ValueError('Input size limit exceeded')
     if len(result) > MAX_FILES or sum(map(len, result.values())) > MAX_TOTAL:
         raise ValueError('Input limits exceeded')
-    for name, data in result.items():
+    members = {('README.md' if n == inv.get('readme_file') else n): b for n, b in result.items()}
+    for source_name, data in result.items():
+        name = 'README.md' if source_name == inv.get('readme_file') else source_name
         text = data.decode('utf-8')
         if re.search(r'(?i)(docs-private|docs-local|BEGIN .*PRIVATE KEY|sk-[a-z0-9]{20}|bearer\s+[a-z0-9._-]{12})', text):
             raise ValueError('Sensitive-content heuristic matched: ' + name)
@@ -176,7 +183,7 @@ def inputs(root, inv):
                     raise ValueError('Unsafe reference')
                 combined = str(PurePosixPath(name).parent / target)
                 safe_name(combined)
-                if combined not in result:
+                if combined not in members:
                     raise ValueError('Undeclared reference: ' + combined)
     return result
 
@@ -239,6 +246,8 @@ def build(root, inv, lock, provider, release_commit=None):
         properties['author'] = {'type': 'object', 'required': ['name'], 'additionalProperties': False,
                                 'properties': {'name': {'type': 'string', 'minLength': 1}}}
         Draft202012Validator({'type': 'object', 'required': ['name', 'version', 'description'], 'additionalProperties': False, 'properties': properties}).validate(manifest)
+    if 'readme_file' in inv:
+        files['README.md'] = files.pop(inv['readme_file'])
     files[manifest_path] = encoded(manifest)
     if inv['connectors']:
         mcp: dict = {'mcpServers': {n: {'type': transport, 'url': endpoint(u)} for n, u in sorted(inv['connectors'].items())}}

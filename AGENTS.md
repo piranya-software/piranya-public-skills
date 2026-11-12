@@ -1,6 +1,6 @@
 # Public-distribution skills
 
-Read the enclosing workspace instructions and this repository's README before edits.
+Read the enclosing workspace instructions, this repository's README and docs/maintenance.md before edits. Product guides are canonical products/*.md inputs; select them explicitly with readme_file and regenerate plugin READMEs instead of editing copies.
 
 - This repository is privately hosted initially. Every file and commit must nevertheless be suitable for eventual public distribution. Never add employee-only procedures, customer examples/identifiers, private endpoints, credentials, tokens, logs, or private source/evidence.
 - Skills describe meaningful user jobs, not one skill per API or provider. Other product areas and non-MCP workflows may be added; keep skill content independent of packaging and avoid a Platform-only root layout.

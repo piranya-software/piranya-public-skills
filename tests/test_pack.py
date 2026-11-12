@@ -25,6 +25,59 @@ class PackagingTests(unittest.TestCase):
     def snapshot(self):
         return p.snapshot(self.root, self.inventory)
 
+    def test_readme_mapping_and_lock_both_providers(self):
+        self.inventory['readme_file'] = 'products/demo.md'
+        path = self.root / 'products/demo.md'
+        path.parent.mkdir()
+        path.write_bytes(b'[Skill](skills/demo/SKILL.md) [Docs](https://public.org/docs)\n')
+        lock = self.snapshot()
+        for provider in ('openai', 'claude'):
+            files = p.inspect(p.build(self.root, self.inventory, lock, provider))
+            self.assertEqual(files['README.md'], path.read_bytes())
+            self.assertNotIn('products/demo.md', files)
+            proof = json.loads(files['package-inputs.json'])
+            self.assertEqual(proof['source']['inputs']['products/demo.md'], p.digest(path.read_bytes()))
+            self.assertEqual(proof['files']['README.md'], p.digest(path.read_bytes()))
+        path.write_bytes(b'Changed\n')
+        for provider in ('openai', 'claude'):
+            with self.assertRaises(ValueError):
+                p.build(self.root, self.inventory, lock, provider)
+
+    def test_readme_missing_unsafe_and_closure(self):
+        for name in ('README.md', '../demo.md', 'products/../demo.md', 'products/demo.txt',
+                     'products/nested/demo.md', 'products/Demo.md', 'products/demo.md\n'):
+            with self.subTest(name=name), self.assertRaises(Exception):
+                p.snapshot(self.root, {**self.inventory, 'readme_file': name})
+        self.inventory['readme_file'] = 'products/demo.md'
+        with self.assertRaises(FileNotFoundError):
+            self.snapshot()
+        path = self.root / 'products/demo.md'
+        path.parent.mkdir()
+        for content in (b'[Missing](docs/guide.md)', b'[Escape](../LICENSE)', b'\xff'):
+            path.write_bytes(content)
+            with self.assertRaises((ValueError, UnicodeDecodeError)):
+                self.snapshot()
+
+    def test_readme_capture_and_inventory_drift(self):
+        from unittest.mock import patch
+        self.inventory['readme_file'] = 'products/demo.md'
+        path = self.root / 'products/demo.md'
+        path.parent.mkdir()
+        path.write_bytes(b'Captured\n')
+        lock = self.snapshot()
+        genuine = p.inputs(self.root, self.inventory)
+        for provider in ('openai', 'claude'):
+            changed = {**genuine, 'products/demo.md': b'Unlocked'}
+            with patch.object(p, 'inputs', return_value=changed) as capture:
+                with self.assertRaises(ValueError):
+                    p.build(self.root, self.inventory, lock, provider)
+                self.assertEqual(capture.call_count, 1)
+        del self.inventory['readme_file']
+        with self.assertRaises(ValueError):
+            p.build(self.root, self.inventory, lock, 'openai')
+        files = p.inspect(p.build(self.root, self.inventory, self.snapshot(), 'openai'))
+        self.assertNotIn('README.md', files)
+
     def test_repeat_build_and_skills_only(self):
         lock = self.snapshot()
         for provider in ('openai', 'claude'):

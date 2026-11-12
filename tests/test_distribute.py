@@ -20,7 +20,7 @@ class DistributionTests(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
         shutil.copyfile(ROOT / 'LICENSE', self.root / 'LICENSE')
-        for folder in ('skills', 'packages'):
+        for folder in ('skills', 'packages', 'products'):
             shutil.copytree(ROOT / folder, self.root / folder)
 
     def test_reproducible_and_provider_parity(self):
@@ -36,10 +36,30 @@ class DistributionTests(unittest.TestCase):
             self.assertEqual(source, json.loads(b['package-inputs.json'])['source'])
             self.assertIn('tools/pack.py', source['builder_inputs'])
             for files, manifest in ((a, '.claude-plugin/plugin.json'), (b, 'plugin.json')):
+                self.assertEqual(files['README.md'], (self.root / ('products/' + name + '.md')).read_bytes())
+                self.assertEqual((self.root / ('plugins/' + name + '/README.md')).read_bytes(), files['README.md'])
+                self.assertEqual(source['inputs']['products/' + name + '.md'], d.pack.digest(files['README.md']))
                 self.assertEqual(files['LICENSE'], (ROOT / 'LICENSE').read_bytes())
                 self.assertEqual(json.loads(files[manifest])['license'], 'MIT')
                 self.assertEqual(source['inputs']['LICENSE'], d.pack.digest(files['LICENSE']))
             self.assertFalse(any('lock.json' in k for k in a))
+
+    def test_product_sources_unchanged_and_readme_drift(self):
+        sources = {p: p.read_bytes() for p in (self.root / 'products').glob('*.md')}
+        d.distribute(self.root)
+        self.assertEqual(sources, {p: p.read_bytes() for p in sources})
+        target = self.root / 'plugins/reporting/README.md'
+        target.write_bytes(b'Unreviewed edit')
+        with self.assertRaises(ValueError):
+            d.distribute(self.root, check=True)
+        self.assertEqual(target.read_bytes(), b'Unreviewed edit')
+        inventory = self.root / 'packages/reporting.json'
+        inv = json.loads(inventory.read_bytes())
+        del inv['readme_file']
+        inventory.write_bytes(d.pack.encoded(inv))
+        with self.assertRaises(ValueError):
+            d.distribute(self.root)
+        self.assertEqual(sources, {p: p.read_bytes() for p in sources})
 
     def test_check_missing_is_read_only(self):
         with self.assertRaises(ValueError):
