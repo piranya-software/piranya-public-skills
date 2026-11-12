@@ -31,6 +31,6 @@ This is not authority to publish unrelated content, update installations, delete
 
 Tool availability and installed-producer capabilities must be checked on the selected connection; installation does not promise compatibility with every site or host. OpenAI/portable packages use streamable HTTP; Claude plugins use HTTP. Offline package validation is not certification of host installation, authentication or live behavior.
 
-[Source and build documentation](https://github.com/piranya-software/piranya-public-skills/blob/main/docs/maintenance.md) describes packaging and release gates. [Support](https://support.piranya.dk/) · [Privacy policy](https://piranya.dk/persondatapolitik).
+[Source and build documentation](https://github.com/piranya-software/piranya-public-skills/blob/main/docs/maintenance.md) describes packaging and release gates. [Support](https://support.piranya.dk/) · [Service terms](https://github.com/piranya-software/piranya-public-skills/blob/main/legal/terms-of-service.md) · [Privacy](https://github.com/piranya-software/piranya-public-skills/blob/main/legal/privacy.md).
 
 The skills, documentation and tooling are covered by the bundled [MIT license](https://github.com/piranya-software/piranya-public-skills/blob/main/LICENSE). The remote MCP service and service access are not licensed by this package; authentication, authorization and applicable service terms still apply.

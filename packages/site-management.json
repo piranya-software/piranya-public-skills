@@ -1,9 +1,28 @@
 {
   "name": "piranya-site-management",
-  "author": {"name": "Piranya"},
+  "author": {
+    "name": "Piranya"
+  },
   "license": "MIT",
   "license_file": "LICENSE",
   "readme_file": "products/site-management.md",
+  "openai_interface": {
+    "displayName": "Piranya site management",
+    "shortDescription": "Website and catalog editing",
+    "longDescription": "Inspect and maintain Piranya website content, shared layouts, styles and catalog records. Make bounded, authorized changes, preserve native behavior and verify saved results. Reading does not authorize writes or deletion; capabilities and permissions depend on the selected site.",
+    "developerName": "Piranya",
+    "category": "Business & Operations",
+    "websiteURL": "https://github.com/piranya-software/piranya-public-skills/blob/main/products/site-management.md",
+    "supportURL": "https://support.piranya.dk/",
+    "privacyPolicyURL": "https://github.com/piranya-software/piranya-public-skills/blob/main/legal/privacy.md",
+    "termsOfServiceURL": "https://github.com/piranya-software/piranya-public-skills/blob/main/legal/terms-of-service.md",
+    "defaultPrompt": [
+      "Inspect the home page layout without changing anything.",
+      "Find a product and propose a focused description update."
+    ],
+    "logo": "./assets/piranya-icon.png",
+    "composerIcon": "./assets/piranya-icon.png"
+  },
   "version": "0.1.0",
   "description": "Piranya site management workflows",
   "skills": {
@@ -25,5 +44,8 @@
   },
   "connectors": {
     "piranya-site-management": "https://mcpserver.prod.core.piranya.io/mcp/site-management"
-  }
+  },
+  "assets": [
+    "assets/piranya-icon.png"
+  ]
 }

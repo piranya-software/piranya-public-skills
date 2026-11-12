@@ -27,7 +27,7 @@ def expected(root):
             for path, data in selected.items():
                 target = stage / path
                 target.parent.mkdir(parents=True, exist_ok=True)
-                target.write_bytes(data.replace(b'\r\n', b'\n'))
+                target.write_bytes(data if pack.binary_asset(path) else data.replace(b'\r\n', b'\n'))
             lock = pack.snapshot(stage, inv)
             for provider in ('claude', 'openai'):
                 archive = pack.build(stage, inv, lock, provider)

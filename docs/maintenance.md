@@ -6,7 +6,7 @@
 
 Edit reusable skill source here, never a generated package or an installed consumer copy. Public-safe site editing, Catalog and Reporting guidance belongs in this repository. Employee-only import orchestration and source analysis belong in the internal skills repository. A new product/workflow can introduce a new skill when it has a useful user-job trigger; a tool or technical namespace alone is not a reason for a skill.
 
-Keep producer schemas, implementation contracts and enforcement in their owning repositories. Skills explain how to use those contracts, not how to bypass missing capabilities. Keep private evidence and customer examples out of public source even while this repository is privately hosted.
+Keep producer schemas, implementation contracts and enforcement in their owning repositories. Skills explain how to use those contracts, not how to bypass missing capabilities. Keep private evidence and customer examples out of this public repository.
 
 ## Freshness before authoring
 
@@ -73,7 +73,7 @@ python "$PUBLIC_BUILDER_PATH/tools/pack.py" lock --source "$PUBLIC_SOURCE_PATH" 
 python "$PUBLIC_BUILDER_PATH/tools/pack.py" build --source "$PUBLIC_SOURCE_PATH" --inventory "$PUBLIC_INVENTORY_PATH" --lock "$PUBLIC_LOCK_PATH" --provider openai --output "$PUBLIC_OUTPUT_PATH"
 ```
 
-The caller must provide these actual paths. Pin the reviewed public builder checkout by commit before release; independently verify its checkout and dependencies. The lock includes builder and schema content hashes and the complete selected source-input hashes, so an initial local snapshot can be consumed without a fictitious commit. Preserve/review that lock as an input to an internal build; do not regenerate it automatically in a consumer build. Private composition belongs to a separate internal builder, not to this CLI: `--source` accepts only explicit public skill files, optional root LICENSE and optional `products/*.md` README selection. No internal checkout, network fetch, or private evidence is consulted at runtime. See [packaging contract](packaging.md).
+The caller must provide these actual paths. Pin the reviewed public builder checkout by commit before release; independently verify its checkout and dependencies. The lock includes builder and schema content hashes and the complete selected source-input hashes, so an initial local snapshot can be consumed without a fictitious commit. Preserve/review that lock as an input to an internal build; do not regenerate it automatically in a consumer build. Private composition belongs to a separate internal builder, not to this CLI: `--source` accepts only explicit public skill files, optional root LICENSE, optional `products/*.md` README selection and explicitly selected bounded `assets/*.png` artwork. No internal checkout, network fetch, or private evidence is consulted at runtime. See [packaging contract](packaging.md).
 
 ### Provider formats and release gates
 

@@ -7,7 +7,10 @@ import json
 from pathlib import Path, PurePosixPath
 import re
 import stat
+import struct
+import zlib
 import subprocess
+import unicodedata
 from urllib.parse import unquote, urlsplit
 import zipfile
 
@@ -17,6 +20,7 @@ from referencing import Registry
 ROOT = Path(__file__).resolve().parents[1]
 PLUGIN_ID = 'https://agent-plugins.org/schemas/1.0.0/plugin.schema.json'
 MCP_ID = 'https://agent-plugins.org/schemas/1.0.0/mcp.schema.json'
+MAX_ASSET = 5 * 1024 * 1024
 MAX_FILE = 1024 * 1024
 MAX_TOTAL = 16 * MAX_FILE
 MAX_FILES = 256
@@ -50,8 +54,63 @@ def safe_name(name):
     return name
 
 
+def binary_asset(name):
+    return bool(re.fullmatch(r'assets/[A-Za-z0-9_-]+\.png', name))
+
+
+def png_check(data):
+    if len(data) > MAX_ASSET or not data.startswith(b'\x89PNG\r\n\x1a\n'):
+        raise ValueError('Invalid PNG signature or size')
+    offset, chunks, compressed = 8, [], bytearray()
+    width = height = channels = 0
+    while offset < len(data):
+        if offset + 12 > len(data):
+            raise ValueError('Truncated PNG')
+        size = struct.unpack_from('>I', data, offset)[0]
+        kind = data[offset + 4:offset + 8]
+        end = offset + size + 12
+        if end > len(data) or not re.fullmatch(b'[A-Za-z]{4}', kind):
+            raise ValueError('Invalid PNG chunk')
+        body = data[offset + 8:end - 4]
+        if zlib.crc32(kind + body) != struct.unpack_from('>I', data, end - 4)[0]:
+            raise ValueError('PNG CRC mismatch')
+        if not chunks and kind != b'IHDR':
+            raise ValueError('Missing PNG header')
+        if kind == b'IHDR':
+            if chunks or size != 13:
+                raise ValueError('Invalid PNG header')
+            width, height, depth, color, comp, filt, interlace = struct.unpack('>IIBBBBB', body)
+            if width != height or not 48 <= width <= 4096 or depth != 8 or color not in (2, 6) or comp or filt or interlace:
+                raise ValueError('PNG requires square 48..4096 noninterlaced 8-bit RGB/RGBA')
+            channels = 3 if color == 2 else 4
+        elif kind == b'IDAT':
+            if b'IDAT' in chunks and chunks[-1] != b'IDAT':
+                raise ValueError('Noncontiguous PNG data')
+            compressed.extend(body)
+        elif kind == b'IEND':
+            if size or end != len(data) or b'IDAT' not in chunks:
+                raise ValueError('Invalid PNG end')
+        elif kind == b'PLTE':
+            if kind in chunks or b'IDAT' in chunks or not size or size % 3 or size > 768:
+                raise ValueError('Invalid PNG palette')
+        elif not kind[0] & 32 or kind in (b'acTL', b'fcTL', b'fdAT'):
+            raise ValueError('Unsupported PNG chunk')
+        chunks.append(kind)
+        offset = end
+    if not chunks or chunks[-1] != b'IEND':
+        raise ValueError('Missing PNG end')
+    expected = height * (1 + width * channels)
+    decoder = zlib.decompressobj()
+    pixels = decoder.decompress(bytes(compressed), expected + 1)
+    if len(pixels) != expected or not decoder.eof or decoder.unused_data or decoder.unconsumed_tail:
+        raise ValueError('Invalid PNG image stream')
+    if any(pixels[i] > 4 for i in range(0, expected, 1 + width * channels)):
+        raise ValueError('Invalid PNG row filter')
+
+
 def read_input(root, name):
     safe_name(name)
+    limit = MAX_ASSET if binary_asset(name) or re.fullmatch(r"plugins/[^/]+/assets/[A-Za-z0-9_-]+\.png", name) else MAX_FILE
     root = Path(root).absolute()
     path = root
     # Inspect ancestors too: resolve() alone would conceal reparse points.
@@ -65,11 +124,11 @@ def read_input(root, name):
         info = path.lstat()
         if stat.S_ISLNK(info.st_mode) or getattr(info, 'st_file_attributes', 0) & 0x400:
             raise ValueError('Linked input')
-    if not stat.S_ISREG(info.st_mode) or info.st_size > MAX_FILE or info.st_nlink > 1:
+    if not stat.S_ISREG(info.st_mode) or info.st_size > limit or info.st_nlink > 1:
         raise ValueError('Invalid input type, hardlink or size')
     with path.open('rb') as stream:
-        data = stream.read(MAX_FILE + 1)
-    if len(data) > MAX_FILE:
+        data = stream.read(limit + 1)
+    if len(data) > limit:
         raise ValueError('Input too large')
     return data
 
@@ -117,21 +176,81 @@ def endpoint(url):
     return url
 
 
+INTERFACE_TEXT_LIMITS = {'displayName': 30, 'shortDescription': 30,
+                         'longDescription': 4000, 'developerName': 80}
+INTERFACE_URLS = ('websiteURL', 'supportURL', 'privacyPolicyURL', 'termsOfServiceURL')
+INTERFACE_CATEGORIES = ('Productivity', 'Creativity', 'Developer Tools', 'Business & Operations',
+                        'Data & Analytics', 'Communication', 'Education & Research', 'Security',
+                        'Finance', 'Healthcare', 'Travel', 'Entertainment', 'Other')
+
+
+def interface_check(value):
+    properties = {k: {'type': 'string', 'minLength': 1, 'maxLength': n}
+                  for k, n in INTERFACE_TEXT_LIMITS.items()}
+    properties.update({k: {'type': 'string', 'minLength': 1, 'maxLength': 1024}
+                       for k in INTERFACE_URLS})
+    properties.update({k: {'type': 'string', 'pattern': r'^\./assets/[A-Za-z0-9_-]+\.png$'} for k in ('logo', 'composerIcon')})
+    properties['category'] = {'enum': list(INTERFACE_CATEGORIES)}
+    prompt = {'type': 'string', 'minLength': 1, 'maxLength': 128}
+    properties['defaultPrompt'] = {'oneOf': [prompt, {'type': 'array', 'maxItems': 3,
+                                                     'uniqueItems': True, 'items': prompt}]}
+    Draft202012Validator({'type': 'object', 'additionalProperties': False,
+                         'properties': properties}).validate(value)
+    for key, text in value.items():
+        if key in INTERFACE_URLS:
+            endpoint(text)
+            host = urlsplit(text).hostname or ''
+            if '@' in urlsplit(text).netloc or not re.fullmatch(r'(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+[A-Za-z][A-Za-z0-9-]{0,62}', host):
+                raise ValueError('Unsafe listing hostname')
+            if any(ord(c) < 33 or ord(c) == 127 for c in unquote(text)):
+                raise ValueError('Unsafe encoded listing URL')
+        elif key != 'defaultPrompt':
+            listing_text(text, multiline=key == 'longDescription')
+    prompts = value.get('defaultPrompt', [])
+    if isinstance(prompts, str):
+        prompts = [prompts]
+    normalized = set()
+    for text in prompts:
+        listing_text(text)
+        key = ' '.join(unicodedata.normalize('NFKC', text).split())
+        if key in normalized or '@' in text:
+            raise ValueError('Duplicate or mentioned starter prompt')
+        normalized.add(key)
+
+
+def listing_text(text, multiline=False):
+    if not text.strip() or any(unicodedata.category(c).startswith('C') and not (multiline and c == '\n')
+                               or (not multiline and c in '\u2028\u2029') for c in text):
+        raise ValueError('Empty or unsupported listing text')
+
+
 def inventory_check(inv):
     schema = {'type': 'object', 'required': ['name', 'version', 'description', 'skills', 'connectors'], 'additionalProperties': False,
               'properties': {'name': {'type': 'string', 'pattern': '^[a-z0-9]+(?:-[a-z0-9]+)*$'}, 'version': {'type': 'string', 'minLength': 1}, 'description': {'type': 'string', 'minLength': 1},
                              'skills': {'type': 'object', 'minProperties': 1, 'additionalProperties': {'type': 'array', 'minItems': 1, 'uniqueItems': True, 'items': {'type': 'string'}}},
                              'connectors': {'type': 'object', 'additionalProperties': {'type': 'string'}},
+                             'assets': {'type': 'array', 'uniqueItems': True, 'maxItems': 16, 'items': {'type': 'string'}},
+                             'openai_interface': {'type': 'object'},
                              'license': {'const': 'MIT'},
                              'license_file': {'const': 'LICENSE'},
                              'readme_file': {'type': 'string', 'pattern': r'^products/[a-z0-9]+(?:-[a-z0-9]+)*\.md$'},
                              'author': {'type': 'object', 'required': ['name'], 'additionalProperties': False,
                                         'properties': {'name': {'type': 'string', 'minLength': 1}}}}}
     Draft202012Validator(schema).validate(inv)
+    if 'openai_interface' in inv:
+        interface_check(inv['openai_interface'])
     if ('license' in inv) != ('license_file' in inv):
         raise ValueError('License metadata and explicit license_file must be selected together')
     if 'readme_file' in inv:
         safe_name(inv['readme_file'])
+    for name in inv.get('assets', []):
+        safe_name(name)
+        if not binary_asset(name):
+            raise ValueError('Unsupported asset path')
+    for key in ('logo', 'composerIcon'):
+        reference = inv.get('openai_interface', {}).get(key)
+        if reference and reference[2:] not in inv.get('assets', []):
+            raise ValueError('Artwork reference must be explicitly selected')
     for key, value in inv['connectors'].items():
         safe_name(key)
         endpoint(value)
@@ -140,6 +259,11 @@ def inventory_check(inv):
 def inputs(root, inv):
     inventory_check(inv)
     result = {}
+    for name in inv.get('assets', []):
+        if name.casefold() in {k.casefold() for k in result}:
+            raise ValueError('Case-colliding asset')
+        result[name] = read_input(root, name)
+        png_check(result[name])
     if 'license_file' in inv:
         result[inv['license_file']] = read_input(root, inv['license_file'])
     if 'readme_file' in inv:
@@ -166,6 +290,8 @@ def inputs(root, inv):
     members = {('README.md' if n == inv.get('readme_file') else n): b for n, b in result.items()}
     for source_name, data in result.items():
         name = 'README.md' if source_name == inv.get('readme_file') else source_name
+        if binary_asset(source_name):
+            continue
         text = data.decode('utf-8')
         if re.search(r'(?i)(docs-private|docs-local|BEGIN .*PRIVATE KEY|sk-[a-z0-9]{20}|bearer\s+[a-z0-9._-]{12})', text):
             raise ValueError('Sensitive-content heuristic matched: ' + name)
@@ -207,7 +333,7 @@ def inspect(raw):
         result = {}
         for e in entries:
             safe_name(e.filename)
-            if e.filename.casefold() in {n.casefold() for n in result} or e.file_size > MAX_FILE or stat.S_ISLNK(e.external_attr >> 16):
+            if e.filename.casefold() in {n.casefold() for n in result} or e.file_size > (MAX_ASSET if binary_asset(e.filename) else MAX_FILE) or stat.S_ISLNK(e.external_attr >> 16):
                 raise ValueError('Unsafe archive entry')
             result[e.filename] = z.read(e)
         return result
@@ -235,6 +361,8 @@ def build(root, inv, lock, provider, release_commit=None):
     if 'license' in inv:
         manifest['license'] = inv['license']
     if provider == 'openai':
+        if 'openai_interface' in inv:
+            manifest['extensions'] = {'com.openai': {'interface': inv['openai_interface']}}
         manifest['$schema'] = PLUGIN_ID
         validate(manifest, 'plugin.schema.json')
         manifest_path, mcp_path, transport = 'plugin.json', 'mcp.json', 'streamable-http'

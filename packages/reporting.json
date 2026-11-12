@@ -1,9 +1,28 @@
 {
   "name": "piranya-reporting",
-  "author": {"name": "Piranya"},
+  "author": {
+    "name": "Piranya"
+  },
   "license": "MIT",
   "license_file": "LICENSE",
   "readme_file": "products/reporting.md",
+  "openai_interface": {
+    "displayName": "Piranya reporting",
+    "shortDescription": "Read-only sales analysis",
+    "longDescription": "Analyze Piranya sales with explicit periods, currencies and department scope. Compare periods and analyze supported fees and rebates when installed capabilities allow it. Read-only reporting does not modify business data; incomplete paging and interpretation limits are disclosed.",
+    "developerName": "Piranya",
+    "category": "Data & Analytics",
+    "websiteURL": "https://github.com/piranya-software/piranya-public-skills/blob/main/products/reporting.md",
+    "supportURL": "https://support.piranya.dk/",
+    "privacyPolicyURL": "https://github.com/piranya-software/piranya-public-skills/blob/main/legal/privacy.md",
+    "termsOfServiceURL": "https://github.com/piranya-software/piranya-public-skills/blob/main/legal/terms-of-service.md",
+    "defaultPrompt": [
+      "Show last month sales by product, separated by currency.",
+      "Compare this period with the previous period if supported."
+    ],
+    "logo": "./assets/piranya-icon.png",
+    "composerIcon": "./assets/piranya-icon.png"
+  },
   "version": "0.1.0",
   "description": "Piranya reporting workflows",
   "skills": {
@@ -16,5 +35,8 @@
   },
   "connectors": {
     "piranya-reporting": "https://mcpserver.prod.core.piranya.io/mcp/reporting"
-  }
+  },
+  "assets": [
+    "assets/piranya-icon.png"
+  ]
 }

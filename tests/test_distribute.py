@@ -20,7 +20,7 @@ class DistributionTests(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
         shutil.copyfile(ROOT / 'LICENSE', self.root / 'LICENSE')
-        for folder in ('skills', 'packages', 'products'):
+        for folder in ('skills', 'packages', 'products', 'assets'):
             shutil.copytree(ROOT / folder, self.root / folder)
 
     def test_reproducible_and_provider_parity(self):
@@ -34,6 +34,19 @@ class DistributionTests(unittest.TestCase):
                              {k: v for k, v in b.items() if k.startswith('skills/')})
             source = json.loads(a['package-inputs.json'])['source']
             self.assertEqual(source, json.loads(b['package-inputs.json'])['source'])
+            inventory = d.pack.load(self.root / ('packages/' + name + '.json'))
+            metadata = json.loads(b['plugin.json'])['extensions']['com.openai']['interface']
+            self.assertEqual(metadata, inventory['openai_interface'])
+            self.assertNotIn('extensions', json.loads(a['.claude-plugin/plugin.json']))
+            self.assertEqual(metadata['termsOfServiceURL'], 'https://github.com/piranya-software/piranya-public-skills/blob/main/legal/terms-of-service.md')
+            self.assertEqual(metadata['privacyPolicyURL'], 'https://github.com/piranya-software/piranya-public-skills/blob/main/legal/privacy.md')
+            self.assertEqual(metadata['logo'], './assets/piranya-icon.png')
+            self.assertEqual(metadata['composerIcon'], metadata['logo'])
+            for files in (a, b):
+                icon = files['assets/piranya-icon.png']
+                self.assertEqual(icon, (self.root / 'assets/piranya-icon.png').read_bytes())
+                self.assertEqual(source['inputs']['assets/piranya-icon.png'], d.pack.digest(icon))
+            d.pack.validate(json.loads(b['plugin.json']), 'plugin.schema.json')
             self.assertIn('tools/pack.py', source['builder_inputs'])
             for files, manifest in ((a, '.claude-plugin/plugin.json'), (b, 'plugin.json')):
                 self.assertEqual(files['README.md'], (self.root / ('products/' + name + '.md')).read_bytes())
@@ -43,6 +56,14 @@ class DistributionTests(unittest.TestCase):
                 self.assertEqual(json.loads(files[manifest])['license'], 'MIT')
                 self.assertEqual(source['inputs']['LICENSE'], d.pack.digest(files['LICENSE']))
             self.assertFalse(any('lock.json' in k for k in a))
+
+    def test_binary_distribution_drift(self):
+        d.distribute(self.root)
+        target = self.root / 'plugins/reporting/assets/piranya-icon.png'
+        target.write_bytes(b'tampered')
+        with self.assertRaises(ValueError):
+            d.distribute(self.root, check=True)
+        self.assertEqual(target.read_bytes(), b'tampered')
 
     def test_product_sources_unchanged_and_readme_drift(self):
         sources = {p: p.read_bytes() for p in (self.root / 'products').glob('*.md')}
