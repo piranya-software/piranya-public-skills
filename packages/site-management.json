@@ -1,0 +1,26 @@
+{
+  "name": "piranya-site-management",
+  "author": {"name": "Piranya"},
+  "version": "0.1.0",
+  "description": "Piranya site management workflows",
+  "skills": {
+    "piranya-site-editing": [
+      "SKILL.md",
+      "references/content-and-routing.md",
+      "references/design-and-assets.md",
+      "references/guarded-changes.md",
+      "references/rendering-diagnostics.md",
+      "references/native-control-contracts.md",
+      "references/scenarios.md"
+    ],
+    "piranya-catalog-management": [
+      "SKILL.md",
+      "references/editing-contracts.md",
+      "references/search-and-selection.md",
+      "references/scenarios.md"
+    ]
+  },
+  "connectors": {
+    "piranya-site-management": "https://mcpserver.prod.core.piranya.io/mcp/site-management"
+  }
+}

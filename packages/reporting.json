@@ -1,0 +1,17 @@
+{
+  "name": "piranya-reporting",
+  "author": {"name": "Piranya"},
+  "version": "0.1.0",
+  "description": "Piranya reporting workflows",
+  "skills": {
+    "piranya-sales-reporting": [
+      "SKILL.md",
+      "references/interpretation.md",
+      "references/request-gates.md",
+      "references/scenarios.md"
+    ]
+  },
+  "connectors": {
+    "piranya-reporting": "https://mcpserver.prod.core.piranya.io/mcp/reporting"
+  }
+}
