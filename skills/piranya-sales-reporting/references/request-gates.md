@@ -24,6 +24,16 @@ Duplicate dimensions, measures, IDs, channels and sort fields reject. Preserve e
 
 Omitted measures use the reviewed defaults **`quantity`, `order_count`, `net_amount`, `gross_amount`**. Additional advertised non-order measures are not automatically defaults. For local sort validation on older capabilities, the adapter intersects those defaults with advertised names; it does not inject a new measure list into the omitted request. Prefer explicit measures when grain or interpretation matters. `limit` defaults to 100 and time zone to UTC; distinguish explicit user choices from defaults in the answer.
 
+## Timestamp and time grouping
+
+The reviewed connector source is MCP **0.20.0**, tag `v0.20.0` at `f9b8675282589cf1597232d66f3304b2b32d818e`. This is a source compatibility reference, not an installed-production version or live acceptance claim. Use fresh producer capabilities on the selected connection; the envelope `contract_revision` does not replace per-report revision gates.
+
+- `timestamp_field` accepts exactly `placed_time` or `expected_fulfillment_time`; omission keeps placement. Any explicit selector requires `report_revision >= 7` plus matching `time.timestamp_fields` name/source metadata: `placed_time` / `orders.placed_time`, or `expected_fulfillment_time` / `orders.expected_delivery_time`. No actual-fulfillment selector is supported. An older producer can still support an omitted-selector baseline; do not probe explicit fields merely because omission works.
+- Recurring `hour_of_day` and `day_of_week` require `report_revision >= 8` and each selected dimension advertised with `grain: "order"` and its same-named column. Do not set `time_bucket` for recurring dimensions unless `time` is also selected. Comparisons are possible with recurring dimensions, but not when the request also groups by `time`.
+- For chronological `group_by: ["time"]`, use `time_bucket: "hour"` with size 1 (omitted size defaults to 1), or `time_bucket: "minute"` with explicit `time_bucket_size: 15` or `30`. Minute without size rejects. `time_bucket_size` is an integer 1–30, accepted only with time grouping; every non-minute bucket permits only size 1.
+- Explicit size, or either subday bucket, requires `report_revision >= 8` and the exact `{bucket, size}` pair in `time.time_bucket_options`. Subday additionally requires the advertised `time` dimension with order grain and both `period_start_at` and `period_end_at` columns. Existing advertised day/week/month requests without explicit size remain compatible with older producers. Do not infer pairs from `time.time_buckets` alone.
+- Preserve returned subday UTC boundaries; each interval must have positive width no greater than its selected duration. `period_start_at`/`period_end_at` sorting is only usable for subday grouping and still requires advertised selected columns. Recurring sorting likewise requires advertised selected fields, not title labels.
+
 ## Comparison, language and filters
 
 - `compare_to` accepts only `previous_period` or `previous_year`, requires `features.compare_to === true`, and cannot combine with time grouping. Missing/false support blocks comparison, not a compatible baseline request. The producer resolves DST/calendar/leap-year windows.
@@ -42,6 +52,6 @@ A rebate request may combine reviewed rebate measures and `order_count`, order/r
 
 ## Paging and transport bounds
 
-The connector does not automatically fetch all report pages. Keep the criteria (including language) unchanged for a returned cursor; only limit may change. Cursors are producer-validated, not decoded/rebound by the client. Traversal caps at 100000 rows; `truncated: true` with no cursor at that ceiling is incomplete, not a successful full export. Department discovery caps at 500 entries.
+The connector does not automatically fetch all report pages. Keep the criteria (including language, timestamp selector, zone, dimensions, bucket and size) unchanged for a returned cursor; only limit may change. Cursors are producer-validated, not decoded/rebound by the client. Traversal caps at 100000 rows; `truncated: true` with no cursor at that ceiling is incomplete, not a successful full export. Department discovery caps at 500 entries.
 
 Capabilities/report bodies are each bounded to 2 MiB and the connector has a 30-second whole-response deadline. Oversize/timeout errors are failures, not silently clipped complete reports. Do not evade bounds by following arbitrary URLs. Exports/download tickets have no approved implemented delivery contract in this workflow; do not offer a CSV URL, filesystem path or invented attachment.

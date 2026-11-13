@@ -37,6 +37,14 @@ class DistributionTests(unittest.TestCase):
             inventory = d.pack.load(self.root / ('packages/' + name + '.json'))
             metadata = json.loads(b['plugin.json'])['extensions']['com.openai']['interface']
             self.assertEqual(metadata, inventory['openai_interface'])
+            openai_mcp = json.loads(b['mcp.json'])
+            self.assertEqual(openai_mcp['$schema'], d.pack.MCP_ID)
+            d.pack.validate_openai_mcp(openai_mcp)
+            for connection, url in inventory['connectors'].items():
+                self.assertEqual(openai_mcp['mcpServers'][connection], {
+                    'type': 'streamable-http', 'url': url,
+                    'extensions': {'com.openai': {'auth': {'type': 'oauth', 'client': {'mode': 'cimd'}}}}})
+                self.assertEqual(json.loads(a['.mcp.json'])['mcpServers'][connection], {'type': 'http', 'url': url})
             claude_manifest = json.loads(a['.claude-plugin/plugin.json'])
             self.assertNotIn('extensions', claude_manifest)
             self.assertEqual(claude_manifest['icon'], './assets/piranya-icon.png')

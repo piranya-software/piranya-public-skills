@@ -2,7 +2,13 @@
 
 ## Time and status
 
-Reports use `orders.placed_time`, not payment settlement or delivery time. Preserve `source_timestamp_field`, `reporting_time_zone`, resolved half-open windows and bucket definitions. Date-only requests resolve in the producer's zone; do not rebucket client-side. Stored local timestamps can have repeated-hour ambiguity at autumn DST; state this when material.
+Placement is the default: `timestamp_field: "placed_time"` uses `orders.placed_time`. The optional `expected_fulfillment_time` selector uses `orders.expected_delivery_time` for expected delivery/pickup demand, not actual fulfillment, payment settlement or a fulfilled date. It is the current mutable expectation, not the original promise; missing expected times are excluded without placement fallback. Selection controls bounds, comparisons and time grouping. Gate explicit selectors using [request gates](request-gates.md).
+
+Preserve `source_timestamp_field`, `reporting_time_zone`, resolved half-open windows and bucket definitions. Date-only requests resolve in the producer's zone (UTC default); `department` requires one common scoped-department zone, otherwise it is ambiguous. Do not rebucket client-side. Stored local timestamps can have repeated-hour ambiguity at autumn DST; state this when material.
+
+Recurring `hour_of_day` groups all occurrences of each local hour (0–23); `day_of_week` uses ISO Monday=1 through Sunday=7. These are not chronological date/hour intervals or per-occurrence averages. Both follow the selected timestamp in the reporting zone and may combine with supported comparisons. Do not synthesize empty groups or divide totals by presumed occurrences.
+
+Chronological `time` grouping with `hour` or `minute` retains local date `period_start` and adds UTC `period_start_at` and exclusive `period_end_at`. Preserve those instants to distinguish repeated local hours where source storage permits; a date or clock label alone is insufficient. Boundaries align to local clock intervals and DST can shorten an interval. Do not infer fixed UTC duration, fill empty intervals or claim source repeated-hour ambiguity is repaired.
 
 Counted orders exclude deleted, test and synthetic payment orders. Default `sales` excludes currently declined/refunded/cancelled orders. Lost-sales status scopes select **current whole-order status**, not a historical ledger of refund events. Partial refunds are not modelled. Payment state is not filtered. Never label these results settled cash, recognized revenue or a refund audit without another supported source.
 
@@ -31,7 +37,7 @@ Preserve comparison metadata, `derived_from`, `derivation`, units and currency-c
 Lead with the business result, then enough context to make it reproducible:
 
 1. Selected site and effective department scope, including unknown/truncated discovery.
-2. Resolved date boundaries/time zone and the placed-time basis.
+2. Resolved date boundaries/time zone, selected timestamp/source and recurring versus chronological grouping.
 3. Measures, grain, currency separation and current status scope.
 4. Producer totals versus selected row observations; comparison mode/window if used.
 5. Pagination/truncation, live-data movement, missing measures and unverified interpretations.

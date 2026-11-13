@@ -43,8 +43,16 @@
       "references/scenarios.md"
     ]
   },
+  "openai_auth": {
+    "piranya-site-management": {
+      "type": "oauth",
+      "client": {
+        "mode": "cimd"
+      }
+    }
+  },
   "connectors": {
-    "piranya-site-management": "https://mcpserver.prod.core.piranya.io/mcp/site-management"
+    "piranya-site-management": "https://mcp.piranya.io/mcp/site-management"
   },
   "assets": [
     "assets/piranya-icon.png"

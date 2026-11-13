@@ -1,11 +1,11 @@
 # Public connector endpoints
 
-Initial package inventories use these concrete production addresses:
+Package inventories select these owner-requested canonical connection targets:
 
-- Site management: `https://mcpserver.prod.core.piranya.io/mcp/site-management`
-- Reporting: `https://mcpserver.prod.core.piranya.io/mcp/reporting`
+- Site management: `https://mcp.piranya.io/mcp/site-management`
+- Reporting: `https://mcp.piranya.io/mcp/reporting`
 
-Sanitized source trace: the MCP GitOps ApplicationSet `clusters/core/shared/appsets/model-context-protocol-server.yaml` selects the production environment and production release file; its ingress host is `mcpserver.{{.metadata.labels.env}}.core.piranya.io` and its public HTTPS base URL uses that same host. The MCP server's maintained README surface table defines `/mcp/site-management` and `/mcp/reporting`. These addresses are configuration-derived, not a live reachability, availability or OAuth certification. No private values, release payloads or credentials are copied here.
+These canonical endpoints are deployed. Authenticated host acceptance remains separate from deployment and depends on the host, account and installation. The canonical authorization-server issuer is `https://identity.piranya.io`; it is not the MCP endpoint or a substitute for host discovery. Package generation does not certify live reachability, availability, OAuth discovery or sign-in. No private values, release payloads or credentials are copied here.
 
 Site management is a curated fixed toolset; reporting is excluded from it. A connector path is discovery selection, not an authorization boundary. The server independently enforces authorization and target delegation. Do not substitute `/mcp/all` silently.
 

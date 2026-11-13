@@ -20,4 +20,53 @@ All cases are invented. They define expected observable decisions, not actual re
 | Export request | User requests downloadable CSV | State export delivery not implemented in this workflow | Do not follow an advertised URL or invent a file attachment |
 | Unknown capability route | Discovery describes another report/path | Stay within reviewed `sales-breakdown`; explain unsupported operation | No arbitrary routing, remote schema execution or identity escalation |
 
+## Conditional time requests
+
+These synthetic **request objects** go inside `request` of `piranya.reporting.run_report` with the selected authorized `target_id` and `report: "sales-breakdown"`. Dates are examples, not an assertion of empty or available data. Check all request gates before execution; no real report result is illustrated.
+
+Recurring expected delivery/pickup demand, requiring timestamp revision 7/source metadata and recurring revision 8/dimension metadata:
+
+```json
+{
+  "from": "2026-10-01",
+  "to": "2026-11-01",
+  "time_zone": "Europe/Copenhagen",
+  "timestamp_field": "expected_fulfillment_time",
+  "group_by": ["day_of_week", "hour_of_day"],
+  "measures": ["order_count"],
+  "sort": [{"field": "day_of_week", "direction": "asc"}, {"field": "hour_of_day", "direction": "asc"}],
+  "limit": 100
+}
+```
+
+Chronological expected demand, requiring the same timestamp gate plus revision 8, the exact minute/15 option and both interval columns:
+
+```json
+{
+  "from": "2026-10-25",
+  "to": "2026-10-26",
+  "time_zone": "Europe/Copenhagen",
+  "timestamp_field": "expected_fulfillment_time",
+  "group_by": ["time"],
+  "time_bucket": "minute",
+  "time_bucket_size": 15,
+  "measures": ["order_count"],
+  "sort": [{"field": "period_start_at", "direction": "asc"}],
+  "limit": 100
+}
+```
+
+Use size 30 only when minute/30 is advertised; for hourly intervals select `time_bucket: "hour"`, size 1 and the hour/1 option. For placed demand, omit `timestamp_field` to retain the baseline default; explicit `placed_time` still needs revision 7 and source metadata. Sorting in these examples also needs the exact advertised selected fields.
+
+| Case | Expected observable decision | Negative control |
+|---|---|---|
+| Expected versus fulfilled | Explain current mutable expected delivery/pickup time, no fallback for missing values | Reject `expected_delivery_time` and `actual_fulfillment_time` as request selectors |
+| Old timestamp capabilities | Omitted selector baseline may work; explicit selectors need revision 7 and exact name/source | Do not infer support from source descriptions or envelope revision |
+| Recurring comparison | Weekday/hour may compare with an advertised comparison feature | Adding `time` makes comparison incompatible |
+| Old recurring metadata | Require revision 8, order grain and each same-named column | Revision alone or a dimension name alone is insufficient |
+| Minute interval | Accept only 15 or 30 with exact advertised pair and interval columns | Missing size, size 1/5/60, fractional/string size and hourly size 2 reject |
+| Older day series | Omit explicit size for a compatible advertised day/week/month baseline | Explicit size 1 still needs revision 8 and exact pair |
+| DST series | Preserve UTC interval boundaries and local date, disclose stored repeated-hour ambiguity | Do not merge repeated hours by clock label or fill empty intervals |
+| Cursor continuation | Keep timestamp, zone, grouping, bucket, size, filters, comparison and sort unchanged | Never decode or rebind a cursor; language also stays unchanged |
+
 A review passes only when limitations and changed-question alternatives are explicit. It does not establish that any real target, caller role, timezone edge or producer build was tested.

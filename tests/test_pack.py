@@ -33,6 +33,50 @@ class PackagingTests(unittest.TestCase):
         target.write_bytes((p.ROOT / 'assets/piranya-icon.png').read_bytes())
         return target
 
+    def test_openai_oauth_selected_connector_only(self):
+        self.select_icon()
+        self.inventory['claude_icon'] = './assets/icon.png'
+        self.inventory['connectors'] = {'demo': 'https://mcp.example.org/mcp', 'other': 'https://mcp.example.org/other'}
+        self.inventory['openai_auth'] = {'demo': {'type': 'oauth', 'client': {'mode': 'cimd'}}}
+        lock = self.snapshot()
+        for provider, path in [('openai', 'mcp.json'), ('claude', '.mcp.json')]:
+            files = p.inspect(p.build(self.root, self.inventory, lock, provider))
+            servers = json.loads(files[path])['mcpServers']
+            if provider == 'openai':
+                self.assertEqual(servers['demo']['extensions'], {'com.openai': {'auth': self.inventory['openai_auth']['demo']}})
+                self.assertNotIn('extensions', servers['other'])
+                self.assertEqual(json.loads(files['plugin.json'])['extensions']['com.openai']['interface'], self.inventory['openai_interface'])
+            else:
+                self.assertEqual(servers, {n: {'type': 'http', 'url': u} for n, u in self.inventory['connectors'].items()})
+                self.assertEqual(json.loads(files['.claude-plugin/plugin.json'])['icon'], './assets/icon.png')
+        self.inventory['openai_auth']['demo'] = {'type': 'oauth'}
+        with self.assertRaises(ValueError):
+            p.build(self.root, self.inventory, lock, 'openai')
+        files = p.inspect(p.build(self.root, self.inventory, self.snapshot(), 'openai'))
+        self.assertEqual(json.loads(files['mcp.json'])['mcpServers']['demo']['extensions']['com.openai']['auth'], {'type': 'oauth'})
+        self.inventory.pop('openai_auth')
+        files = p.inspect(p.build(self.root, self.inventory, self.snapshot(), 'openai'))
+        self.assertTrue(all(set(s) == {'type', 'url'} for s in json.loads(files['mcp.json'])['mcpServers'].values()))
+
+    def test_openai_oauth_fail_closed(self):
+        self.inventory['connectors'] = {'demo': 'https://mcp.example.org/mcp'}
+        invalid = [None, [], {'demo': {}}, {'unknown': {'type': 'oauth'}},
+                   {'demo': {'type': 'none'}}, {'demo': {'type': 'oauth', 'client': {}}},
+                   {'demo': {'type': 'oauth', 'client': {'mode': 'auto'}}},
+                   {'demo': {'type': 'oauth', 'client': {'mode': 'provided', 'clientId': 'fixed'}}},
+                   {'demo': {'type': 'oauth', 'client': {'mode': 'cimd', 'clientSecret': 'synthetic'}}},
+                   {'demo': {'type': 'oauth', 'clientId': 'fixed'}},
+                   {'demo': {'type': 'oauth', 'authorizationUrl': 'https://mcp.example.org/auth'}},
+                   {'demo': {'type': 'oauth', 'extensions': {'arbitrary': {}}}}]
+        for auth in invalid:
+            for provider in ('openai', 'claude'):
+                with self.subTest(auth=auth, provider=provider), self.assertRaises(Exception):
+                    inv = {**self.inventory, 'openai_auth': auth}
+                    p.build(self.root, inv, p.snapshot(self.root, inv), provider)
+        for field in ('claude_auth', 'extensions', 'auth'):
+            with self.subTest(field=field), self.assertRaises(Exception):
+                p.snapshot(self.root, {**self.inventory, field: {'type': 'oauth'}})
+
     def test_binary_binding_capture_and_tamper(self):
         from unittest.mock import patch
         target = self.select_icon()
@@ -377,8 +421,46 @@ class PackagingTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.snapshot()
 
+    def test_openai_oauth_retains_required_mcp_schema(self):
+        self.inventory['connectors'] = {'demo': 'https://mcp.example.org/mcp'}
+        self.inventory['openai_auth'] = {'demo': {'type': 'oauth', 'client': {'mode': 'cimd'}}}
+        files = p.inspect(p.build(self.root, self.inventory, self.snapshot(), 'openai'))
+        mcp = json.loads(files['mcp.json'])
+        self.assertEqual(mcp.get('$schema'), p.MCP_ID, 'OpenAI OAuth MCP must retain the required Agent Plugins format marker')
+
+    def test_openai_mcp_overlay_rejects_unknown_fields_and_missing_marker(self):
+        import copy
+        base = {'$schema': p.MCP_ID, 'mcpServers': {'demo': {
+            'type': 'streamable-http', 'url': 'https://mcp.example.org/mcp',
+            'extensions': {'com.openai': {'auth': {'type': 'oauth', 'client': {'mode': 'cimd'}}}}}}}
+        p.validate_openai_mcp(base)
+        with self.assertRaises(Exception):
+            p.validate(base, 'mcp.schema.json')
+        invalid = []
+        missing = copy.deepcopy(base)
+        del missing['$schema']
+        invalid.append(missing)
+        for path, value in [
+                (('invented',), True),
+                (('mcpServers', 'demo', 'invented'), True),
+                (('mcpServers', 'demo', 'type'), 'http'),
+                (('mcpServers', 'demo', 'extensions', 'unknown'), {}),
+                (('mcpServers', 'demo', 'extensions', 'com.openai', 'invented'), True),
+                (('mcpServers', 'demo', 'extensions', 'com.openai', 'auth', 'secret'), 'no'),
+                (('mcpServers', 'demo', 'extensions', 'com.openai', 'auth', 'client', 'mode'), 'auto')]:
+            obj = copy.deepcopy(base)
+            target = obj
+            for key in path[:-1]:
+                target = target[key]
+            target[path[-1]] = value
+            invalid.append(obj)
+        for obj in invalid:
+            with self.subTest(obj=obj), self.assertRaises(Exception):
+                p.validate_openai_mcp(obj)
+        self.assertIn('extensions', base['mcpServers']['demo'])
+
     def test_multiple_connectors(self):
-        self.inventory['connectors'] = {'one': 'https://mcpserver.prod.core.piranya.io/mcp/site-management', 'two': 'https://mcpserver.prod.core.piranya.io/mcp/reporting'}
+        self.inventory['connectors'] = {'one': 'https://mcp.piranya.io/mcp/site-management', 'two': 'https://mcp.piranya.io/mcp/reporting'}
         for provider, transport in [('openai', 'streamable-http'), ('claude', 'http')]:
             data = p.inspect(p.build(self.root, self.inventory, self.snapshot(), provider))
             config = json.loads(data['mcp.json' if provider == 'openai' else '.mcp.json'])

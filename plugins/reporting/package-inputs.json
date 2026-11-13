@@ -1,14 +1,14 @@
 {
   "files": {
     ".claude-plugin/plugin.json": "384d95df359851edd33bc1ef4f74f571cff36874bea20309c037f91757ef3f51",
-    ".mcp.json": "7204128eb493a409434b4d57ef085f9018efd14145471062f636a0a850d8185d",
+    ".mcp.json": "131dffc755e6b77a857011313e769043c24d2a87ad2865fc125c931ebcd2aa14",
     "LICENSE": "acc551d426d8af5e1af556443629463bd4de026f7ed73a0c51ef1d94c3d27dc9",
-    "README.md": "03f35061c15f145c04e539950cf131383dc26fa0f280c181badeff84fe5341b7",
+    "README.md": "75615ee2b00d3baa77afe8f4d677599d5f3a1827262b98239a4c573f31fb76b1",
     "assets/piranya-icon.png": "aadb3ad69a6664d3634a4cd9fb626494d429644cdfbb548ed3ad1c522d4c92e3",
-    "skills/piranya-sales-reporting/SKILL.md": "5015abafb4dfbc1b55206e2e0168e54d8f9f07d0da863093e772382a4ce3926b",
-    "skills/piranya-sales-reporting/references/interpretation.md": "aed166e922ee311ec496f083d405dfba91508811fb6b73c6b6e67f094e25ce93",
-    "skills/piranya-sales-reporting/references/request-gates.md": "a0b0a59f6bd6fe26d1336ad90824a0bb069adc20ff5f78c0db0efc064dea5717",
-    "skills/piranya-sales-reporting/references/scenarios.md": "b3e2d16e523b5c5edfe05578a9b2810799e38251b230a0124f20a16216d6fae9"
+    "skills/piranya-sales-reporting/SKILL.md": "5e660a4e4b12c7ca5d85b36e64db62a800bb0e204f2a647d64e4748105219961",
+    "skills/piranya-sales-reporting/references/interpretation.md": "ddaae8e4d1d0235294dcf873517622b9415e113cf7c2eabcb95fe395ee9e2488",
+    "skills/piranya-sales-reporting/references/request-gates.md": "4ec40bbedf0707f7c2f70579a18c53ce29ee94883d2035099451ed8858c58115",
+    "skills/piranya-sales-reporting/references/scenarios.md": "542af16293125a802fac7b30d358de264e08327a8f1a676cae3ddf3948f13b2e"
   },
   "provider": "claude",
   "source": {
@@ -16,18 +16,18 @@
       "schemas/mcp.schema.json": "6539175bfcdf43085855183e86da40ea94b166547a72b47ae9a0a390516d3acb",
       "schemas/plugin.schema.json": "0a4aad95ce337878ad38802ebf0daa3fde76abe3f65400c86bcbb1ec0b3ab883",
       "schemas/provenance.json": "e33203fae61c784a3564646f68234366419c849661964c2cba70606298a65379",
-      "tools/pack.py": "a721282e52ca6a15d18a710a82307130b56a17c8d5f71dab2e3a19b45cac615b"
+      "tools/pack.py": "aa1a485204673fc583b02c18fd8acc77a7ca1b6b7e328a00cfb7165bc5e7713c"
     },
     "format": 1,
     "inputs": {
       "LICENSE": "acc551d426d8af5e1af556443629463bd4de026f7ed73a0c51ef1d94c3d27dc9",
       "assets/piranya-icon.png": "aadb3ad69a6664d3634a4cd9fb626494d429644cdfbb548ed3ad1c522d4c92e3",
-      "products/reporting.md": "03f35061c15f145c04e539950cf131383dc26fa0f280c181badeff84fe5341b7",
-      "skills/piranya-sales-reporting/SKILL.md": "5015abafb4dfbc1b55206e2e0168e54d8f9f07d0da863093e772382a4ce3926b",
-      "skills/piranya-sales-reporting/references/interpretation.md": "aed166e922ee311ec496f083d405dfba91508811fb6b73c6b6e67f094e25ce93",
-      "skills/piranya-sales-reporting/references/request-gates.md": "a0b0a59f6bd6fe26d1336ad90824a0bb069adc20ff5f78c0db0efc064dea5717",
-      "skills/piranya-sales-reporting/references/scenarios.md": "b3e2d16e523b5c5edfe05578a9b2810799e38251b230a0124f20a16216d6fae9"
+      "products/reporting.md": "75615ee2b00d3baa77afe8f4d677599d5f3a1827262b98239a4c573f31fb76b1",
+      "skills/piranya-sales-reporting/SKILL.md": "5e660a4e4b12c7ca5d85b36e64db62a800bb0e204f2a647d64e4748105219961",
+      "skills/piranya-sales-reporting/references/interpretation.md": "ddaae8e4d1d0235294dcf873517622b9415e113cf7c2eabcb95fe395ee9e2488",
+      "skills/piranya-sales-reporting/references/request-gates.md": "4ec40bbedf0707f7c2f70579a18c53ce29ee94883d2035099451ed8858c58115",
+      "skills/piranya-sales-reporting/references/scenarios.md": "542af16293125a802fac7b30d358de264e08327a8f1a676cae3ddf3948f13b2e"
     },
-    "inventory_sha256": "b03ce54ab36429f605837986694ec3c123e504f6eb0b8c3a41dd0e600a892221"
+    "inventory_sha256": "22a30224ca01dd579f5bc1dd150643e97b6f1611f9a906c2a17333ed01c5ff60"
   }
 }

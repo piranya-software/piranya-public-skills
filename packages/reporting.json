@@ -34,8 +34,16 @@
       "references/scenarios.md"
     ]
   },
+  "openai_auth": {
+    "piranya-reporting": {
+      "type": "oauth",
+      "client": {
+        "mode": "cimd"
+      }
+    }
+  },
   "connectors": {
-    "piranya-reporting": "https://mcpserver.prod.core.piranya.io/mcp/reporting"
+    "piranya-reporting": "https://mcp.piranya.io/mcp/reporting"
   },
   "assets": [
     "assets/piranya-icon.png"

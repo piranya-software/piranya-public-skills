@@ -158,6 +158,23 @@ def validate(obj, schema_name):
     Draft202012Validator(schema, registry=Registry()).validate(obj)
 
 
+def validate_openai_mcp(obj):
+    auth_schema = {'type': 'object', 'required': ['type'], 'additionalProperties': False,
+                   'properties': {'type': {'const': 'oauth'}, 'client': {
+                       'type': 'object', 'required': ['mode'], 'additionalProperties': False,
+                       'properties': {'mode': {'const': 'cimd'}}}}}
+    extension_schema = {'type': 'object', 'required': ['com.openai'], 'additionalProperties': False,
+                        'properties': {'com.openai': {'type': 'object', 'required': ['auth'],
+                            'additionalProperties': False, 'properties': {'auth': auth_schema}}}}
+    base = json.loads(json.dumps(obj))
+    if base.get('$schema') != MCP_ID:
+        raise ValueError('OpenAI MCP requires the Agent Plugins format marker')
+    for server in base.get('mcpServers', {}).values():
+        if 'extensions' in server:
+            Draft202012Validator(extension_schema).validate(server.pop('extensions'))
+    validate(base, 'mcp.schema.json')
+
+
 def endpoint(url):
     parts = urlsplit(url)
     host = parts.hostname or ''
@@ -231,6 +248,11 @@ def inventory_check(inv):
                              'connectors': {'type': 'object', 'additionalProperties': {'type': 'string'}},
                              'assets': {'type': 'array', 'uniqueItems': True, 'maxItems': 16, 'items': {'type': 'string'}},
                              'openai_interface': {'type': 'object'},
+                             'openai_auth': {'type': 'object', 'additionalProperties': {
+                                 'type': 'object', 'required': ['type'], 'additionalProperties': False,
+                                 'properties': {'type': {'const': 'oauth'}, 'client': {
+                                     'type': 'object', 'required': ['mode'], 'additionalProperties': False,
+                                     'properties': {'mode': {'const': 'cimd'}}}}}},
                              'claude_icon': {'type': 'string', 'pattern': r'^\./assets/[A-Za-z0-9_-]+\.png$'},
                              'license': {'const': 'MIT'},
                              'license_file': {'const': 'LICENSE'},
@@ -238,6 +260,8 @@ def inventory_check(inv):
                              'author': {'type': 'object', 'required': ['name'], 'additionalProperties': False,
                                         'properties': {'name': {'type': 'string', 'minLength': 1}}}}}
     Draft202012Validator(schema).validate(inv)
+    if set(inv.get('openai_auth', {})) - set(inv['connectors']):
+        raise ValueError('OpenAI auth must select declared connectors')
     if 'openai_interface' in inv:
         interface_check(inv['openai_interface'])
     if ('license' in inv) != ('license_file' in inv):
@@ -390,7 +414,9 @@ def build(root, inv, lock, provider, release_commit=None):
         mcp: dict = {'mcpServers': {n: {'type': transport, 'url': endpoint(u)} for n, u in sorted(inv['connectors'].items())}}
         if provider == 'openai':
             mcp['$schema'] = MCP_ID
-            validate(mcp, 'mcp.schema.json')
+            for name, auth in inv.get('openai_auth', {}).items():
+                mcp['mcpServers'][name]['extensions'] = {'com.openai': {'auth': auth}}
+            validate_openai_mcp(mcp)
         files[mcp_path] = encoded(mcp)
     files['package-inputs.json'] = encoded({'source': lock, 'provider': provider, 'files': {n: digest(b) for n, b in sorted(files.items())}})
     out = io.BytesIO()
