@@ -63,6 +63,7 @@ class DistributionTests(unittest.TestCase):
             d.pack.validate(json.loads(b['plugin.json']), 'plugin.schema.json')
             self.assertIn('tools/pack.py', source['builder_inputs'])
             for files, manifest in ((a, '.claude-plugin/plugin.json'), (b, 'plugin.json')):
+                self.assertEqual(json.loads(files[manifest])['version'], inventory['version'])
                 self.assertEqual(files['README.md'], (self.root / ('products/' + name + '.md')).read_bytes())
                 self.assertEqual((self.root / ('plugins/' + name + '/README.md')).read_bytes(), files['README.md'])
                 self.assertEqual(source['inputs']['products/' + name + '.md'], d.pack.digest(files['README.md']))

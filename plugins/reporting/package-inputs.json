@@ -1,6 +1,6 @@
 {
   "files": {
-    ".claude-plugin/plugin.json": "384d95df359851edd33bc1ef4f74f571cff36874bea20309c037f91757ef3f51",
+    ".claude-plugin/plugin.json": "abf0cc570416da2b8302e71638a1074cf3c417036ab395321d32150372521497",
     ".mcp.json": "131dffc755e6b77a857011313e769043c24d2a87ad2865fc125c931ebcd2aa14",
     "LICENSE": "acc551d426d8af5e1af556443629463bd4de026f7ed73a0c51ef1d94c3d27dc9",
     "README.md": "75615ee2b00d3baa77afe8f4d677599d5f3a1827262b98239a4c573f31fb76b1",
@@ -28,6 +28,6 @@
       "skills/piranya-sales-reporting/references/request-gates.md": "4ec40bbedf0707f7c2f70579a18c53ce29ee94883d2035099451ed8858c58115",
       "skills/piranya-sales-reporting/references/scenarios.md": "542af16293125a802fac7b30d358de264e08327a8f1a676cae3ddf3948f13b2e"
     },
-    "inventory_sha256": "22a30224ca01dd579f5bc1dd150643e97b6f1611f9a906c2a17333ed01c5ff60"
+    "inventory_sha256": "c2fac22cc7e5df48764d50d45565a04fa300bd2927b160e983e90bab3699bc1b"
   }
 }
