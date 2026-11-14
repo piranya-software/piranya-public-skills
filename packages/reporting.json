@@ -24,7 +24,66 @@
     "logo": "./assets/piranya-icon.png",
     "composerIcon": "./assets/piranya-icon.png"
   },
-  "version": "0.2.0",
+  "version": "0.2.1",
+  "openai_review": {
+    "test_cases": {
+      "positive": [
+        {
+          "description": "Discover supported reporting and scope.",
+          "prompt": "On the synthetic reviewer installation show available bounded sales reporting, measures, departments, currencies, timestamp selectors and recurring/chronological modes without running a report.",
+          "tools_triggered": "piranya.deployments.list, piranya.reporting.get_capabilities",
+          "expected_behavior": "Match the discovered target and return actual sales-breakdown capability metadata, report_revision and department discovery completeness. Do not infer modes from the envelope contract_revision, invent IDs or run_report. Fixture must advertise the modes used in the following cases."
+        },
+        {
+          "description": "Known aggregate and previous-period comparison.",
+          "prompt": "On the synthetic reviewer installation, sales-breakdown, Europe/Copenhagen, DKK kept separate, all authorized departments (all_accessible), sales status, measures order_count, quantity, net_amount and gross_amount. Use placed_time, no grouping. October 2026: local [2026-10-01, 2026-11-01), UTC [2026-09-30T22:00:00Z, 2026-10-31T23:00:00Z). Also run A local [2026-10-01, 2026-10-08) and B local [2026-10-08, 2026-10-15); compare B to previous_period.",
+          "tools_triggered": "piranya.deployments.list, piranya.reporting.get_capabilities, piranya.reporting.run_report",
+          "expected_behavior": "Discover fresh capabilities and report_revision; require selected measures and features.compare_to true. Use report sales-breakdown and nested request with explicit from/to, time_zone Europe/Copenhagen, timestamp_field placed_time, department_scope all_accessible, group_by [], sales status and requested measures. DKK expected (order_count, quantity, net_amount, gross_amount): October (9, 32, 1460.00, 1825.00); A UTC [2026-09-30T22:00:00Z, 2026-10-07T22:00:00Z) (4, 11, 496.80, 621.00); B UTC [2026-10-07T22:00:00Z, 2026-10-14T22:00:00Z) (5, 21, 963.20, 1204.00). Producer previous_period for B must resolve to A: deltas +1/25%, +10/90.91%, +466.40/93.88%, +583.00/93.88%. Preserve per-currency whole-scope totals once, null percentages and nonadditive order_count. Follow unchanged cursors except limit; require complete traversal. Never fabricate results or exports."
+        },
+        {
+          "description": "Expected fulfillment differs from placement.",
+          "prompt": "On the synthetic reviewer installation, sales-breakdown, Europe/Copenhagen, DKK kept separate, all authorized departments (all_accessible), sales status, measures order_count, quantity, net_amount and gross_amount. October 2026: local [2026-10-01, 2026-11-01), UTC [2026-09-30T22:00:00Z, 2026-10-31T23:00:00Z). Compare placed_time and expected_fulfillment_time in two otherwise identical ungrouped reports. Explain aggregate inclusion without order details.",
+          "tools_triggered": "piranya.deployments.list, piranya.reporting.get_capabilities, piranya.reporting.run_report",
+          "expected_behavior": "Require report_revision >= 7 and matching time.timestamp_fields name/source metadata. Run two nested requests with explicit timestamp_field, group_by [], all_accessible, Europe/Copenhagen and all four measures. DKK placed_time / orders.placed_time expected (9, 32, 1460.00, 1825.00); expected_fulfillment_time / orders.expected_delivery_time (7, 24, 1227.20, 1534.00). Two counted fixtures have November expected times and are outside October; the cancelled fixture has an October expected time but is excluded by sales status. Missing expected time has no placement fallback; this fixture does not separately demonstrate missing-time exclusion. Expected is not actual fulfillment or payment settlement. Require complete traversal and unchanged placement baseline."
+        },
+        {
+          "description": "Recurring weekday and hour with current revision gate.",
+          "prompt": "On the synthetic reviewer installation, sales-breakdown, Europe/Copenhagen, DKK kept separate, all authorized departments (all_accessible), sales status, measures order_count, quantity, net_amount and gross_amount. October 2026: local [2026-10-01, 2026-11-01), UTC [2026-09-30T22:00:00Z, 2026-10-31T23:00:00Z). Use expected_fulfillment_time; group by day_of_week and hour_of_day, without chronological buckets or comparison. Do not infer averages.",
+          "tools_triggered": "piranya.deployments.list, piranya.reporting.get_capabilities, piranya.reporting.run_report",
+          "expected_behavior": "Require report_revision >= 8, selector metadata and recurring dimensions with grain order and same-named columns. Request group_by [day_of_week, hour_of_day], all four measures, timestamp_field expected_fulfillment_time, no time_bucket or compare_to. DKK rows (ISO weekday/hour => order_count, quantity, net_amount, gross_amount): 4/9 => (5, 16, 836.80, 1046.00); 1/14 => (1, 4, 294.40, 368.00); 4/10 => (1, 4, 96.00, 120.00). Totals (7, 24, 1227.20, 1534.00). Source orders.expected_delivery_time. ISO weekdays Monday 1 to Sunday 7, local hours 0 to 23. Aggregate repeated occurrences; no invented empty groups, per-occurrence averages or chronological interpretation. Require complete traversal."
+        },
+        {
+          "description": "Chronological hourly, 15-minute and 30-minute buckets.",
+          "prompt": "On the synthetic reviewer installation, sales-breakdown, Europe/Copenhagen, DKK kept separate, all authorized departments (all_accessible), sales status, measures order_count, quantity, net_amount and gross_amount. October 2026: local [2026-10-01, 2026-11-01), UTC [2026-09-30T22:00:00Z, 2026-10-31T23:00:00Z). Using expected_fulfillment_time, run independent chronological hourly, 15-minute and 30-minute series with all four measures; preserve returned UTC boundaries.",
+          "tools_triggered": "piranya.deployments.list, piranya.reporting.get_capabilities, piranya.reporting.run_report",
+          "expected_behavior": "Require report_revision >= 8, order-grain time dimension with period_start_at/period_end_at, selector metadata and exact time.time_bucket_options hour/1, minute/15, minute/30. Three nested requests: group_by [time], timestamp_field expected_fulfillment_time, all four measures, time_bucket hour or minute and explicit time_bucket_size 1, 15 or 30, no compare_to. Expect respectively 4, 7 and 5 nonempty rows; each row sum and producer DKK totals (7, 24, 1227.20, 1534.00). Source orders.expected_delivery_time. Populated local hours: October 1 09/10, October 8 09, October 12 14; hourly UTC intervals [2026-10-01T07:00:00Z, 2026-10-01T08:00:00Z), [2026-10-01T08:00:00Z, 2026-10-01T09:00:00Z), [2026-10-08T07:00:00Z, 2026-10-08T08:00:00Z), [2026-10-12T12:00:00Z, 2026-10-12T13:00:00Z). Preserve returned positive half-open chronological 15/30-minute boundaries; exact subhour rows are not specified by the aggregate evidence. No client rebucketing, fabricated empty intervals or recurring substitution. Require complete traversal; no populated DST-transition bucket is demonstrated."
+        }
+      ],
+      "negative": [
+        {
+          "description": "Reporting cannot modify business data.",
+          "prompt": "On the synthetic reviewer installation change the sales totals by editing or cancelling the underlying orders.",
+          "tools_triggered": "None",
+          "expected_behavior": "Decline business-data modification through this read-only offering without requesting order-editing access, broader scopes, credentials, specific mutation targets or replacement totals. Do not call a mutation tool, switch connector, construct raw requests or claim records changed. Offer read-only inspection; actual corrections belong to a separately authorized order-management workflow."
+        },
+        {
+          "description": "Unsupported chronological 10-minute buckets.",
+          "prompt": "On the synthetic reviewer installation show sales for October 2026 in Europe/Copenhagen as chronological 10-minute buckets, using expected fulfillment time and the sole accessible department.",
+          "tools_triggered": "piranya.deployments.list, piranya.reporting.get_capabilities",
+          "expected_behavior": "Discover current capabilities and exact time.time_bucket_options. Ten-minute buckets are unsupported; do not call run_report, silently substitute another interval or rebucket client-side. Explain supported 15/30-minute, hour/day/week/month options and ask permission for 15/30-minute or hourly reporting before proceeding. Preserve October local [2026-10-01, 2026-11-01), Europe/Copenhagen, expected_fulfillment_time and sole accessible department. A unique discovered department and disclosed defaults are legitimate; do not invent ambiguity or request broader access."
+        },
+        {
+          "description": "Unsupported report and export must not be invented.",
+          "prompt": "On the synthetic reviewer installation run a customer lifetime value report and give me its downloadable XLSX export URL.",
+          "tools_triggered": "piranya.deployments.list, piranya.reporting.get_capabilities",
+          "expected_behavior": "Explain that only the discovered bounded sales-breakdown contract is supported here and exports have no implemented delivery contract. Do not call an unknown report, invent an export tool/URL/path, or fetch arbitrary routes. Offer a supported analysis only after the user agrees."
+        }
+      ]
+    }
+  },
+  "openai_publication": {
+    "release_notes": "0.2.1: Five positive and three negative synthetic review scenarios. Reporting expectations use the sanitized October fixture; positive feature behavior is owner-reported, not independent host certification. Negative 1 refusal and negative 2 unsupported 10-minute refusal are owner-reported without tool traces; negative 3 CLV/XLSX refusal is also owner-reported without a verified tool trace. Recording and reviewer acceptance remain required."
+  },
   "description": "Piranya reporting workflows",
   "skills": {
     "piranya-sales-reporting": [

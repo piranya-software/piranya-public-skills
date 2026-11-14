@@ -15,6 +15,10 @@ Keep producer schemas, implementation contracts and enforcement in their owning 
 3. Read the current canonical rule and relevant producer contract before changing it. Update contradictory guidance in place, qualify compatibility and preserve unique safety constraints.
 4. Recheck upstream before publication. A current checkout at session start is not proof that nobody published meanwhile.
 
+## Review case authoring
+
+Use [OpenAI review case authoring](review-cases.md) for canonical inventory fields, synthetic fixture prerequisites, producer gates and repeatable package verification. Keep credentials and private reviewer instructions out of source and archives.
+
 ## Verification and publication
 
 Run the repository tests, validate skill identity and references, inspect public suitability, and explicitly add new supporting files to every affected package inventory. Re-lock only as a deliberate acceptance of selected source/tooling changes; never use automatic re-locking to hide stale-lock failures. Build and inspect both selected provider outputs; syntax validation and synthetic tests do not prove live-host behavior.

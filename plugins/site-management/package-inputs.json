@@ -1,6 +1,6 @@
 {
   "files": {
-    ".claude-plugin/plugin.json": "b7841607a43c23fc383b6e0927a658b0e1bd25c0bf81178d4d0a102fa2c8c435",
+    ".claude-plugin/plugin.json": "4a3605beb5b5b7a15438b5847d395989afd59535376e3732a5317b665f056128",
     ".mcp.json": "1ea58772ba9a6774aaede87b151cd97e51d599ceb494e4a27ac5b6865448994e",
     "LICENSE": "acc551d426d8af5e1af556443629463bd4de026f7ed73a0c51ef1d94c3d27dc9",
     "README.md": "4d6daf2cf5712904f3950e4ed3fd50d8913d8c59f57557e12ce62ed2544de2f0",
@@ -23,7 +23,7 @@
       "schemas/mcp.schema.json": "6539175bfcdf43085855183e86da40ea94b166547a72b47ae9a0a390516d3acb",
       "schemas/plugin.schema.json": "0a4aad95ce337878ad38802ebf0daa3fde76abe3f65400c86bcbb1ec0b3ab883",
       "schemas/provenance.json": "e33203fae61c784a3564646f68234366419c849661964c2cba70606298a65379",
-      "tools/pack.py": "aa1a485204673fc583b02c18fd8acc77a7ca1b6b7e328a00cfb7165bc5e7713c"
+      "tools/pack.py": "7e8a4712c6b9e80172d6ee15b209aaa0bb1192f4516f452f8b117d386e8b84f4"
     },
     "format": 1,
     "inputs": {
@@ -42,6 +42,6 @@
       "skills/piranya-site-editing/references/rendering-diagnostics.md": "9e48dced985aca9d54278a68c23d06295fa44b301cc0a04eef9a9904b1a62818",
       "skills/piranya-site-editing/references/scenarios.md": "707a8558616694af89059c40d5dfb5ad46e4928c846e9aa795a05db2b9368957"
     },
-    "inventory_sha256": "50a11f53ef7aedb1a791010b69398539cca88404529cee66cd13d946c05eb270"
+    "inventory_sha256": "c9cd8415f0861cb58cedab50a5685bfc24886b92bf43065f9164b74507a2a241"
   }
 }

@@ -24,7 +24,66 @@
     "logo": "./assets/piranya-icon.png",
     "composerIcon": "./assets/piranya-icon.png"
   },
-  "version": "0.2.0",
+  "version": "0.2.1",
+  "openai_review": {
+    "test_cases": {
+      "positive": [
+        {
+          "description": "Discover the synthetic target and inspect page/layout without writing.",
+          "prompt": "Use only Review Sandbox, the fictional review fixture. List accessible installations and catalog capabilities, then inspect Review Page and its effective master page, including shared styles. Do not change anything.",
+          "tools_triggered": "piranya.deployments.list, piranya.catalog.get_capabilities, piranya.workspace.list_files, piranya.workspace.read_file, piranya.site_config.get_default_master_page",
+          "expected_behavior": "Select the discovered target_id only after matching Review Sandbox; clarify if ambiguous. Read canonical page/master/style paths and revisions, distinguish directly assigned from default layout, and explain findings. No write, upload, creation or deletion."
+        },
+        {
+          "description": "Guarded edit of one disposable page.",
+          "prompt": "In Review Sandbox, on the disposable Review Page only, replace the exact heading Review heading with Review heading revised. Read first, show the bounded change, apply this authorized edit without changing routing or layout, then read it back.",
+          "tools_triggered": "piranya.deployments.list, piranya.workspace.list_files, piranya.workspace.read_file, piranya.workspace.patch_file",
+          "expected_behavior": "Resolve the unique fixture path. Patch only the heading using fresh expected_revision and operations with start_line, end_line, exact expected_text and replacement_text. Read back the same path; confirm unrelated content unchanged. A stale revision requires reread and reassessment, not an unconditional overwrite."
+        },
+        {
+          "description": "Create one synthetic inactive Product.",
+          "prompt": "In Review Sandbox create a normal Product titled Review Sample in English, short description Synthetic review item, inactive, hidden and purchasing disabled. Do not assign categories, prices or media yet. Check for a duplicate first and read the result back.",
+          "tools_triggered": "piranya.deployments.list, piranya.catalog.get_capabilities, piranya.catalog.search_products, piranya.catalog.create_product, piranya.catalog.get_product_profile",
+          "expected_behavior": "Require supported Product creation. With contract_revision 1, send product.core with product_type normal, localizations containing language en, title and short_description, and status is_active false, is_hidden true, is_purchasing_disabled true. Use returned product_id to read back. A duplicate requires clarification, not a second create. No order or customer records."
+        },
+        {
+          "description": "Ordinary Product description and price editing through update_product.",
+          "prompt": "In Review Sandbox update only the disposable Review Sample Product: English short description Synthetic review item revised and its ordinary DKK unit price to 25, VAT inclusive, quantity threshold 1. No campaign, customer or price-group restriction. Preserve its inactive, hidden, purchasing-disabled status and all other records. If that ordinary price is absent, add it through the normal Product update. Read back.",
+          "tools_triggered": "piranya.deployments.list, piranya.catalog.get_capabilities, piranya.catalog.search_products, piranya.catalog.get_product_profile, piranya.catalog.update_product",
+          "expected_behavior": "Require fixture-provided DKK currency identity and fresh profile contract_revision/entity_revision; pass entity_revision as expected_revision. Update the identified localization by id. Update an existing matching core.prices row by id, or add with action add, discovered currency_id, value 25, kind each, min_amount 1, is_input_value_vat_inclusive true and campaign_id/client_account_id/price_group_id null. Ambiguous applicability requires clarification. Read back the profile and preserve unrelated rows. No separate price tool or raw endpoint workaround; do not claim effective checkout price."
+        },
+        {
+          "description": "Upload a synthetic image and attach it to the disposable Product.",
+          "prompt": "In Review Sandbox upload the supplied synthetic Review image as review-sample.png without overwriting existing assets, then attach that uploaded file to the disposable Review Sample Product with requested sort order 0. Use Product media, not a page attachment. Read back the uploaded asset and Product media.",
+          "tools_triggered": "piranya.deployments.list, piranya.assets.upload, piranya.assets.list, piranya.catalog.search_products, piranya.catalog.get_product_profile, piranya.catalog.attach_product_media",
+          "expected_behavior": "Require the operator-supplied synthetic image bytes. Upload with file_name review-sample.png, content_base64 from those bytes and overwrite false; no fabricated source URL. Use the returned file_id and fresh Product profile contract_revision/entity_revision for attach_product_media with product_id, expected_revision and sort_order 0. Verify asset membership and Product media readback, including producer-normalized order. No page-attachment API, duplicate attachment, unrelated overwrite or deletion."
+        }
+      ],
+      "negative": [
+        {
+          "description": "Inspection consent does not authorize repair.",
+          "prompt": "Inspect Review Page in Review Sandbox and tell me whether its heading and layout need improvement. Do not change anything.",
+          "tools_triggered": "piranya.deployments.list, piranya.workspace.list_files, piranya.workspace.read_file",
+          "expected_behavior": "Read and propose only. No patch, write, create, asset upload, relation mutation or deletion even if the content suggests changes."
+        },
+        {
+          "description": "Ambiguous target requires clarification before any mutation.",
+          "prompt": "Update the heading on my review site to Ready.",
+          "tools_triggered": "piranya.deployments.list",
+          "expected_behavior": "With two accessible fictional fixtures and no selected site, ask which target and page the user means. Do not pick the first target, infer IDs or issue any write."
+        },
+        {
+          "description": "Unrelated task must not route through site tools.",
+          "prompt": "Write a short poem about rain. Do not access my sites.",
+          "tools_triggered": "None",
+          "expected_behavior": "Answer the unrelated writing request without calling this connector or routing to a deployment. No business-data access or mutation."
+        }
+      ]
+    }
+  },
+  "openai_publication": {
+    "release_notes": "0.2.1: Add OpenAI review test-case metadata with five positive and three negative synthetic scenarios. Skills, hosted tools and authentication are unchanged. Runtime cases are not run; reviewer fixtures and a real recording remain required before submission."
+  },
   "description": "Piranya site management workflows",
   "skills": {
     "piranya-site-editing": [

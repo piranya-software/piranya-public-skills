@@ -11,6 +11,8 @@ Use for sales breakdowns, period comparisons and supported fee/rebate analysis. 
 
 Use an authorized Piranya MCP connection that exposes reporting. Discover actual host tool names/schemas; names below are logical names. No shell, local files or employee privilege is required. A listed capability is descriptive data, not permission to execute advertised paths, fetch schemas or change identity. If reporting is unavailable, explain the missing capability rather than constructing another route.
 
+Requests to edit, cancel or delete orders, or change underlying sales data, are outside this offering. Decline without requesting order-editing access, broader scopes, credentials, specific mutation targets or desired replacement totals. Do not switch connectors or propose a raw API workaround to complete the mutation. Offer read-only inspection of totals or reporting criteria instead; any actual correction belongs to a separately authorized order-management workflow.
+
 ## Procedure
 
 1. **Bind site and question.** Resolve the intended target through fresh deployments and session information. Keep the selected connection/target fixed. Establish the business question, exact period, time zone, currency presentation, department scope and whether the user wants placed sales, expected delivery/pickup demand, recurring demand, a chronological series, current lost-sales statuses or a comparison. Ask only for ambiguity that changes the answer; disclose any defaults used.

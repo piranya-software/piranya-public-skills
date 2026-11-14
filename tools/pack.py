@@ -241,12 +241,53 @@ def listing_text(text, multiline=False):
         raise ValueError('Empty or unsupported listing text')
 
 
+def review_check(value, connector_count):
+    text = {'type': 'string', 'minLength': 1, 'maxLength': 4000}
+    url = {'type': 'string', 'minLength': 1, 'maxLength': 1024}
+    fields = {k: text for k in ('description', 'prompt', 'tools_triggered', 'expected_behavior')}
+    fields.update(file_attachment_urls={'type': 'array', 'maxItems': 8, 'uniqueItems': True, 'items': url},
+                  expected_output_url=url)
+    cases = {}
+    for kind, maximum in (('positive', 5), ('negative', 3)):
+        required = ['description', 'prompt']
+        if kind == 'positive':
+            required += ['tools_triggered', 'expected_behavior']
+        cases[kind] = {'type': 'array', 'maxItems': maximum, 'items': {
+            'type': 'object', 'required': required, 'additionalProperties': False, 'properties': fields}}
+    Draft202012Validator({'type': 'object', 'additionalProperties': False, 'properties': {
+        'test_cases': {'type': 'object', 'additionalProperties': False, 'properties': cases},
+        'demo_recording_url': url}}).validate(value)
+    if 'test_cases' in value and connector_count != 1:
+        raise ValueError('Plugin-level review cases require exactly one declared connector')
+    if 'demo_recording_url' in value:
+        endpoint(value['demo_recording_url'])
+    for entries in value.get('test_cases', {}).values():
+        for case in entries:
+            for key, item in case.items():
+                if key == 'file_attachment_urls':
+                    for link in item:
+                        endpoint(link)
+                elif key == 'expected_output_url':
+                    endpoint(item)
+                else:
+                    listing_text(item, multiline=True)
+
+
+def publication_check(value):
+    Draft202012Validator({'type': 'object', 'additionalProperties': False, 'properties': {
+        'release_notes': {'type': 'string', 'minLength': 1, 'maxLength': 4000}}}).validate(value)
+    for text in value.values():
+        listing_text(text, multiline=True)
+
+
 def inventory_check(inv):
     schema = {'type': 'object', 'required': ['name', 'version', 'description', 'skills', 'connectors'], 'additionalProperties': False,
               'properties': {'name': {'type': 'string', 'pattern': '^[a-z0-9]+(?:-[a-z0-9]+)*$'}, 'version': {'type': 'string', 'minLength': 1}, 'description': {'type': 'string', 'minLength': 1},
                              'skills': {'type': 'object', 'minProperties': 1, 'additionalProperties': {'type': 'array', 'minItems': 1, 'uniqueItems': True, 'items': {'type': 'string'}}},
                              'connectors': {'type': 'object', 'additionalProperties': {'type': 'string'}},
                              'assets': {'type': 'array', 'uniqueItems': True, 'maxItems': 16, 'items': {'type': 'string'}},
+                             'openai_review': {'type': 'object'},
+                             'openai_publication': {'type': 'object'},
                              'openai_interface': {'type': 'object'},
                              'openai_auth': {'type': 'object', 'additionalProperties': {
                                  'type': 'object', 'required': ['type'], 'additionalProperties': False,
@@ -260,6 +301,10 @@ def inventory_check(inv):
                              'author': {'type': 'object', 'required': ['name'], 'additionalProperties': False,
                                         'properties': {'name': {'type': 'string', 'minLength': 1}}}}}
     Draft202012Validator(schema).validate(inv)
+    if 'openai_review' in inv:
+        review_check(inv['openai_review'], len(inv['connectors']))
+    if 'openai_publication' in inv:
+        publication_check(inv['openai_publication'])
     if set(inv.get('openai_auth', {})) - set(inv['connectors']):
         raise ValueError('OpenAI auth must select declared connectors')
     if 'openai_interface' in inv:
@@ -391,8 +436,11 @@ def build(root, inv, lock, provider, release_commit=None):
     if 'license' in inv:
         manifest['license'] = inv['license']
     if provider == 'openai':
-        if 'openai_interface' in inv:
-            manifest['extensions'] = {'com.openai': {'interface': inv['openai_interface']}}
+        extension = {target: inv[source] for source, target in (
+            ('openai_interface', 'interface'), ('openai_review', 'review'),
+            ('openai_publication', 'publication')) if source in inv}
+        if extension:
+            manifest['extensions'] = {'com.openai': extension}
         manifest['$schema'] = PLUGIN_ID
         validate(manifest, 'plugin.schema.json')
         manifest_path, mcp_path, transport = 'plugin.json', 'mcp.json', 'streamable-http'
