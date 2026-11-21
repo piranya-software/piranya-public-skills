@@ -5,7 +5,12 @@ Skills for working with Piranya through an authorized AI assistant connection.
 - [Site management](products/site-management.md): website content, design and catalog maintenance.
 - [Reporting](products/reporting.md): read-only sales analysis and comparisons.
 
-Each product guide explains access, supported jobs, boundaries and example prompts. The same canonical guide is bundled as the root README in both provider ZIPs and the generated Claude plugin.
+The Site Management and Reporting guides are also bundled with their respective plugins.
+
+## Additional remote connectors
+
+- [Site Operations](products/site-operations.md): investigate issues, recorded job runs, logs and entity-change history.
+- [Integrations](products/integrations.md): discover supported reads and retrieve records from configured integrations.
 
 ## Contributors
 
