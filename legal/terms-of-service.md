@@ -1,6 +1,6 @@
 # Piranya MCP service terms
 
-Piranya Software ApS provides Piranya Site Management and Piranya Reporting as connections to your authorized Piranya installation. Your applicable customer-specific service agreement and data-processing agreement continue to apply. These supplemental terms do not replace those agreements or limit rights or obligations under applicable law. Access remains subject to your account permissions and agreed service arrangements.
+Piranya Software ApS provides Piranya Site Management, Piranya Reporting, Piranya Site Operations and Piranya Integrations as connections to your authorized Piranya installation. Your applicable customer-specific service agreement and data-processing agreement continue to apply. These supplemental terms do not replace those agreements or limit rights or obligations under applicable law. Access remains subject to your account permissions and agreed service arrangements.
 
 ## Your AI provider and responsibility
 

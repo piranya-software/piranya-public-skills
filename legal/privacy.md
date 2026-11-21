@@ -1,10 +1,10 @@
 # Piranya MCP privacy supplement
 
-This supplement explains the Piranya Site Management and Reporting integration provided by Piranya Software ApS, CVR 38274503. It complements our [general privacy policy](https://piranya.dk/persondatapolitik) and your applicable customer-specific service and data-processing agreements. Those agreements are provided to customers directly, not published here.
+This supplement covers the Piranya Site Management, Reporting, Site Operations and Integrations connections provided by Piranya Software ApS, CVR 38274503. It complements our [general privacy policy](https://piranya.dk/persondatapolitik) and your applicable customer-specific service and data-processing agreements. Those agreements are provided to customers directly, not published here.
 
 ## Information processed and hosting
 
-The connection processes identity and authorization information, installation selections, tool requests and their results to provide authorized access to your Piranya installation. Requests and results may contain website content, catalog information, business reports and personal data, depending on your task. The service also processes authorization/session records and operational/security information needed to operate and protect access.
+The connection processes identity and authorization information, installation selections, tool requests and their results to provide authorized access to your Piranya installation. Requests and results may contain website content, catalog information, business reports, operational evidence (such as logs, job diagnostics and recorded changes), or records returned by configured integrations (such as product or order information). These may contain personal data even when the connector only reads data. The service also processes authorization/session records and operational/security information needed to operate and protect access.
 
 Piranya hosts the MCP server—not your AI provider's LLM—in its Hetzner hosting environment under the applicable customer arrangements. Your AI provider hosts or arranges its own service separately; this hosting statement does not describe where that provider processes or stores information.
 
