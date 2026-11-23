@@ -6,7 +6,7 @@ Use this read-only connector to discover what your configured Piranya integratio
 
 1. In Claude’s connector settings, add a custom connector with `https://mcp.piranya.io/mcp/integrations` as the remote MCP URL, or select Piranya Integrations from the directory if listed.
 2. Sign in through Piranya and authorize access. You need installation-wide administrator access and an enabled, configured integration that supports reads. A department- or account-only context is not sufficient.
-3. Obtain the deployment target ID for the intended installation. This connector does not list installations itself. Use an authorized Piranya Core connection at `https://mcp.piranya.io/mcp` and ask it to list your authorized installations using `piranya.deployments.list`. Select the matching installation and use its returned `target_id` with Integrations. If you cannot connect Core or the installation is not listed, ask your Piranya administrator for help. Do not substitute a site URL or an integration instance ID.
+3. Ask Claude to list your authorized Piranya installations using the Integrations connector. Select the installation you want to use by name; you do not need to copy a deployment ID or connect Piranya Core. If the installation is missing or an integration read is denied, check your access with your Piranya administrator. Seeing an installation in the list does not grant permission to read its integration records.
 
 ## Try a read
 
